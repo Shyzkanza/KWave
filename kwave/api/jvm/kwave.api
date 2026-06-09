@@ -1,0 +1,99 @@
+public final class red/rankorr/kwave/KWaveKt {
+	public static final fun KWave (Lred/rankorr/kwave/WaveConfig;FFLandroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
+	public static final fun KWave (Lred/rankorr/kwave/WaveConfig;Landroidx/compose/ui/Modifier;FFZZLandroidx/compose/runtime/Composer;II)V
+}
+
+public abstract interface class red/rankorr/kwave/ShadowMode {
+}
+
+public final class red/rankorr/kwave/ShadowMode$Auto : red/rankorr/kwave/ShadowMode {
+	public static final field $stable I
+	public static final field INSTANCE Lred/rankorr/kwave/ShadowMode$Auto;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class red/rankorr/kwave/ShadowMode$Custom : red/rankorr/kwave/ShadowMode {
+	public static final field $stable I
+	public synthetic fun <init> (JFLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlpha ()F
+	public final fun getColor-0d7_KjU ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class red/rankorr/kwave/ShadowMode$FromWave : red/rankorr/kwave/ShadowMode {
+	public static final field $stable I
+	public static final field INSTANCE Lred/rankorr/kwave/ShadowMode$FromWave;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class red/rankorr/kwave/ShadowMode$None : red/rankorr/kwave/ShadowMode {
+	public static final field $stable I
+	public static final field INSTANCE Lred/rankorr/kwave/ShadowMode$None;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class red/rankorr/kwave/WaveColors {
+	public static final field $stable I
+	public static final field Companion Lred/rankorr/kwave/WaveColors$Companion;
+	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun fillColorFor-WaAFU9c (II)J
+	public final fun getBackgroundStops ()Ljava/util/List;
+	public final fun getHighlight-0d7_KjU ()J
+}
+
+public final class red/rankorr/kwave/WaveColors$Companion {
+	public final fun gradient--OWjLjI (JJ)Lred/rankorr/kwave/WaveColors;
+	public final fun palette (Ljava/util/List;)Lred/rankorr/kwave/WaveColors;
+	public final fun solid-8_81llA (J)Lred/rankorr/kwave/WaveColors;
+}
+
+public final class red/rankorr/kwave/WaveConfig {
+	public static final field $stable I
+	public static final field Companion Lred/rankorr/kwave/WaveConfig$Companion;
+	public fun <init> (Lkotlinx/collections/immutable/ImmutableList;Lred/rankorr/kwave/WaveColors;Lred/rankorr/kwave/ShadowMode;F)V
+	public synthetic fun <init> (Lkotlinx/collections/immutable/ImmutableList;Lred/rankorr/kwave/WaveColors;Lred/rankorr/kwave/ShadowMode;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColors ()Lred/rankorr/kwave/WaveColors;
+	public final fun getGradientEnd ()F
+	public final fun getLayers ()Lkotlinx/collections/immutable/ImmutableList;
+	public final fun getShadow ()Lred/rankorr/kwave/ShadowMode;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class red/rankorr/kwave/WaveConfig$Companion {
+	public final fun generate (IFFFFFLred/rankorr/kwave/WaveColors;Lred/rankorr/kwave/ShadowMode;FI)Lred/rankorr/kwave/WaveConfig;
+	public static synthetic fun generate$default (Lred/rankorr/kwave/WaveConfig$Companion;IFFFFFLred/rankorr/kwave/WaveColors;Lred/rankorr/kwave/ShadowMode;FIILjava/lang/Object;)Lred/rankorr/kwave/WaveConfig;
+	public final fun getDefault ()Lred/rankorr/kwave/WaveConfig;
+}
+
+public final class red/rankorr/kwave/WaveLayerSpec {
+	public static final field $stable I
+	public synthetic fun <init> (FFFFFFFFFLjava/lang/Float;Landroidx/compose/ui/graphics/Color;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FFFFFFFFFLjava/lang/Float;Landroidx/compose/ui/graphics/Color;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlpha ()Ljava/lang/Float;
+	public final fun getAmplitude ()F
+	public final fun getBaseFrac ()F
+	public final fun getBreathDepth ()F
+	public final fun getBreathOffset ()F
+	public final fun getBreathSpeed ()F
+	public final fun getCrests ()F
+	public final fun getHarmonic ()F
+	public final fun getPhaseOffset ()F
+	public final fun getSpeed ()F
+	public final fun getTint-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public final fun withAlpha (Ljava/lang/Float;)Lred/rankorr/kwave/WaveLayerSpec;
+	public final fun withTint-Y2TPw74 (Landroidx/compose/ui/graphics/Color;)Lred/rankorr/kwave/WaveLayerSpec;
+}
+

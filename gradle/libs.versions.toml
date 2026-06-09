@@ -1,0 +1,66 @@
+[versions]
+# --- Toolchain (mirrors the reference app versions where they overlap) ---
+agp = "8.13.2"
+kotlin = "2.3.21"
+composeMultiplatform = "1.10.3"
+detekt = "1.23.7"
+robolectric = "4.13"
+
+# Android SDK levels (library: conservative minSdk for broad consumer reach)
+android-compileSdk = "36"
+android-minSdk = "24"
+
+# AndroidX lifecycle (KMP artifacts under org.jetbrains.androidx.lifecycle)
+androidx-lifecycle = "2.10.0"
+
+# --- Library runtime deps ---
+kotlinx-collections-immutable = "0.3.8"
+
+# --- Publishing / docs / API stability (new, recent stable) ---
+vanniktech-publish = "0.30.0"
+dokka = "1.9.20"
+binary-compatibility-validator = "0.16.3"
+
+# --- Screenshot testing ---
+roborazzi = "1.32.0"
+
+# --- Sample app (material3 for the slider UI) ---
+material3 = "1.11.0-alpha07"
+
+[libraries]
+# Compose (library core — NO material3 here)
+compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "composeMultiplatform" }
+compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "composeMultiplatform" }
+compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMultiplatform" }
+
+# Sample-only Compose extras
+compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
+
+# Lifecycle (KMP) — pause/resume animation loop
+androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
+
+# Immutable collections (keeps @Stable on WaveConfig.layers)
+kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinx-collections-immutable" }
+
+# Tests
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlin-testJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+compose-uiTestJunit4 = { module = "org.jetbrains.compose.ui:ui-test-junit4", version.ref = "composeMultiplatform" }
+androidx-compose-uiTestManifest = { module = "androidx.compose.ui:ui-test-manifest" }
+
+# Roborazzi (golden screenshot tests on JVM/Robolectric)
+roborazzi = { module = "io.github.takahirom.roborazzi:roborazzi", version.ref = "roborazzi" }
+roborazzi-compose = { module = "io.github.takahirom.roborazzi:roborazzi-compose", version.ref = "roborazzi" }
+roborazzi-junit-rule = { module = "io.github.takahirom.roborazzi:roborazzi-junit-rule", version.ref = "roborazzi" }
+
+[plugins]
+androidLibrary = { id = "com.android.library", version.ref = "agp" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+vanniktech-mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech-publish" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+binaryCompatibilityValidator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "binary-compatibility-validator" }
+roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }

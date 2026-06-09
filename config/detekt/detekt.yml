@@ -1,0 +1,46 @@
+complexity:
+  LongMethod:
+    threshold: 60
+    # Compose renderers / sample UI legitimately run long.
+    excludes: ['**/sample/**']
+  CyclomaticComplexMethod:
+    excludes: ['**/sample/**']
+  LongParameterList:
+    # generate() is the high-level factory exposing 10 cohesive tuning knobs by design
+    # (waveCount, crests, phaseSpread, spacing, amplitude, variation, colors, shadow,
+    # gradientEnd, seed); the threshold is exclusive, so 11 admits it.
+    functionThreshold: 11
+    # WaveLayerSpec is the locked low-level type with 11 tuning fields by design
+    # (threshold is exclusive, so 12 admits the 11-param constructor).
+    constructorThreshold: 12
+    # Composables and the generate() factory expose many tuning knobs by design.
+    ignoreAnnotated: ['Composable']
+  TooManyFunctions:
+    thresholdInFiles: 20
+    thresholdInClasses: 15
+
+naming:
+  FunctionNaming:
+    # Compose functions are PascalCase (KWave, etc.).
+    ignoreAnnotated: ['Composable']
+  MatchingDeclarationName:
+    # KMP uses expect/actual files (Foo.android.kt / Foo.ios.kt).
+    active: false
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][A-Za-z0-9_]*'
+
+style:
+  ReturnCount:
+    # The renderer / color helpers use guard-clause early returns (zero-size guard,
+    # empty/single-stop short-circuits) which read more clearly than nested branches.
+    max: 3
+    excludeGuardClauses: true
+  MaxLineLength:
+    maxLineLength: 120
+  WildcardImport:
+    active: false
+  MagicNumber:
+    # Wave math is full of intentional tuning constants.
+    active: false
+  ForbiddenComment:
+    active: false
