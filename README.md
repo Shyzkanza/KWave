@@ -15,6 +15,19 @@ its own rate, rather than marching sideways across the screen. It is theme-free.
 entry points: a drop-in auto composable that owns its own animation loop, and a stateless one that
 is a pure function of `(phase, time)` for tests and external sync.
 
+<p align="center">
+  <img src="docs/screenshots/kwave.gif" alt="KWave animated wave background" width="640">
+</p>
+
+| Default preset | Two-color gradient | Rainbow palette |
+|:---:|:---:|:---:|
+| ![Default](docs/screenshots/default.png) | ![Gradient](docs/screenshots/gradient.png) | ![Rainbow](docs/screenshots/rainbow.png) |
+| **Solid color** | **`FromWave` shadow** | **`Custom` shadow** |
+| ![Solid](docs/screenshots/solid.png) | ![FromWave](docs/screenshots/shadow-fromwave.png) | ![Custom](docs/screenshots/shadow-custom.png) |
+
+> Regenerate these locally with `./gradlew :kwave:recordRoborazziDebug` (stills) and
+> `./gradlew :sample:generateGif` (the animation).
+
 ---
 
 ## Platforms

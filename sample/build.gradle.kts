@@ -38,3 +38,14 @@ compose.desktop {
         }
     }
 }
+
+// Dev-only task: render the README hero GIF headlessly (no external tools).
+tasks.register<JavaExec>("generateGif") {
+    group = "kwave"
+    description = "Renders the README hero GIF to docs/screenshots/kwave.gif."
+    workingDir = rootProject.projectDir
+    val mainCompilation = kotlin.jvm().compilations.getByName("main")
+    dependsOn(mainCompilation.compileTaskProvider)
+    classpath = files(mainCompilation.output.allOutputs, mainCompilation.runtimeDependencyFiles)
+    mainClass.set("red.rankorr.kwave.sample.GifGeneratorKt")
+}
