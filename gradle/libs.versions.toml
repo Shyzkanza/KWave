@@ -28,7 +28,7 @@ roborazzi = "1.32.0"
 material3 = "1.11.0-alpha07"
 
 [libraries]
-# Compose (library core — NO material3 here)
+# Compose (library core, NO material3 here)
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "composeMultiplatform" }
 compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "composeMultiplatform" }
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMultiplatform" }
@@ -36,7 +36,7 @@ compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMul
 # Sample-only Compose extras
 compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
 
-# Lifecycle (KMP) — pause/resume animation loop
+# Lifecycle (KMP), pause/resume animation loop
 androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 
 # Immutable collections (keeps @Stable on WaveConfig.layers)

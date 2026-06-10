@@ -30,19 +30,19 @@ import com.github.takahirom.roborazzi.captureRoboImage
  * THEME-FREE golden-capture helper for the KWave library, adapted from a reference app
  * `ScreenshotHelper.captureToPng` **minus** the app theme.
  *
- * KWave reads no `MaterialTheme` — every color is supplied through [WaveColors] — so the capture
- * wrapper deliberately uses **no** app theme. Content is rendered into a plain, fixed-size box (a
+ * KWave reads no `MaterialTheme` (every color is supplied through [WaveColors]), so the capture
+ * wrapper uses no app theme. Content is rendered into a plain, fixed-size box (a
  * neutral [Color.Black] backdrop so any unpainted region is obvious) and the root node is captured
  * with Roborazzi.
  *
- * Output PNGs land under `src/androidUnitTest/roborazzi/<name>.png` — a TRACKED path outside
+ * Output PNGs land under `src/androidUnitTest/roborazzi/<name>.png`, a TRACKED path outside
  * `build/`, so goldens can be committed to source control. Run
  * `./gradlew :kwave:recordRoborazziDebug` to write goldens and `:kwave:verifyRoborazziDebug` to
  * compare against them.
  *
  * @param name golden image base name (the `.png` is added by Roborazzi).
  * @param config the wave configuration to render.
- * @param phase fixed horizontal-phase value (deterministic — no animation loop is used).
+ * @param phase fixed horizontal-phase value (deterministic, no animation loop is used).
  * @param time fixed elapsed-seconds value (deterministic).
  */
 fun AndroidComposeTestRule<ActivityScenarioRule<ComponentActivity>, ComponentActivity>.captureWave(
@@ -52,7 +52,7 @@ fun AndroidComposeTestRule<ActivityScenarioRule<ComponentActivity>, ComponentAct
     time: Float = 0f,
 ) {
     setContent {
-        // No app theme, no MaterialTheme — a fixed-size canvas with a neutral black backdrop.
+        // No app theme, no MaterialTheme: a fixed-size canvas with a neutral black backdrop.
         // The STATELESS KWave overload is used so identical (phase, time) yield identical pixels.
         KWave(
             config = config,

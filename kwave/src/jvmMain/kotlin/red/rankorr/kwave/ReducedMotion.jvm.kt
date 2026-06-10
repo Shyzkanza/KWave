@@ -21,7 +21,7 @@ import androidx.compose.runtime.Composable
  * Desktop / JVM reduce-motion signal.
  *
  * The JVM (Compose Desktop) target has no standard cross-platform "reduce motion" system setting,
- * so this actual always reports `false` — animations run by default. Desktop callers that want to
+ * so this actual always reports `false` and animations run by default. Desktop callers that want to
  * honor a user preference can gate [KWave] themselves via `isPlaying`.
  *
  * @return always `false`.

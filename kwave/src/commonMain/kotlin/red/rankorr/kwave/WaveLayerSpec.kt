@@ -26,7 +26,7 @@ import androidx.compose.ui.graphics.Color
  * [WaveConfig.generate] and never touch [WaveLayerSpec] directly.
  *
  * **Validation.** Every value is **coerced into its valid range at construction** (see the
- * per-parameter notes below), so an out-of-range input can never reach the renderer — for example a
+ * per-parameter notes below), so an out-of-range input can never reach the renderer. For example a
  * negative [amplitude] becomes `0` (a flat line, not a crash) and a [baseFrac] above `1` is clamped
  * to `1`. The coerced values are exposed through the read-only properties.
  *
@@ -40,7 +40,7 @@ import androidx.compose.ui.graphics.Color
  *   value becomes `0`). Default `0.03`.
  * @param speed multiplier applied to the caller's `phase` for this layer (lets layers respond to
  *   `phase` by different amounts); under the constant-phase drop-in it only shifts the static crest
- *   position — set just one of [speed]/[phaseOffset]. Default `1`.
+ *   position. Set just one of [speed]/[phaseOffset]. Default `1`.
  * @param phaseOffset constant horizontal phase offset, in radians. Together with [speed] this fixes
  *   the layer's static horizontal crest position; set just one. Default `0`.
  * @param breathDepth depth of the amplitude-breathing oscillation, as a fraction of [amplitude].
@@ -48,8 +48,8 @@ import androidx.compose.ui.graphics.Color
  * @param breathSpeed angular frequency of the breathing oscillation, in radians per second. Coerced
  *   to `>= 0`. Default `0.25`.
  * @param breathOffset phase offset of the breathing oscillation, in radians. Primarily a
- *   [WaveConfig.generate]-internal desync dimension — rarely hand-set. Default `0`.
- * @param crests relative crest density — higher = more, tighter crests across the width (formerly
+ *   [WaveConfig.generate]-internal desync dimension, rarely hand-set. Default `0`.
+ * @param crests relative crest density; higher = more, tighter crests across the width (formerly
  *   `c1`); a density, **not** a literal crest count. Coerced to `>= 0`. Default `0.8`.
  * @param harmonic **weight** of the second-harmonic sinusoid (the harmonic's frequency is derived
  *   internally). Coerced to `>= 0`. A value of `0` yields a **pure sine** wave. Default `0.25`.

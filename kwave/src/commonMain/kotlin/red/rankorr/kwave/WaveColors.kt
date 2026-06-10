@@ -22,19 +22,19 @@ import androidx.compose.ui.graphics.lerp
 /**
  * Color strategy for the wave background and per-layer fills.
  *
- * KWave is theme-free: the caller supplies every color through this type — the library reads no
+ * KWave is theme-free: the caller supplies every color through this type, and the library reads no
  * `MaterialTheme`. A [WaveColors] instance is built **only** through the [gradient], [palette] and
  * [solid] factory functions; the primary constructor is private, which keeps the public surface
  * small and lets the internal representation evolve without breaking binary compatibility.
  *
  * Internally a [WaveColors] resolves three things consumed by the renderer:
  *
- * 1. [backgroundStops] — the ordered gradient stops painted as the canvas background.
- * 2. [fillColorFor] — the per-layer fill color, **derived from the palette** by sampling at the
+ * 1. [backgroundStops]: the ordered gradient stops painted as the canvas background.
+ * 2. [fillColorFor]: the per-layer fill color, **derived from the palette** by sampling at the
  *    layer's normalized depth. This is the chief correction over the original reference renderer,
  *    which always filled each layer with a hardcoded [Color.Black]; here the fill is **never** black
  *    unless the caller explicitly supplies a black-based palette.
- * 3. [highlight] — the luminous "lip" color drawn above each crest.
+ * 3. [highlight]: the luminous "lip" color drawn above each crest.
  *
  * Per-layer **alpha** is not part of [WaveColors]: it is auto-assigned by depth (see [autoAlpha])
  * unless a [WaveLayerSpec.alpha] override is present.
@@ -72,7 +72,7 @@ public class WaveColors private constructor(
      *
      * - For a [gradient], back layers lean toward the `top` color and front layers toward `bottom`.
      * - For a [palette] (rainbow), each layer picks a distinct hue from the multi-stop palette.
-     * - For a [solid], the fill ramps slightly by depth (darker back → lighter front) so the
+     * - For a [solid], the fill ramps slightly by depth (darker back, lighter front) so the
      *   same-color waves stay visible; the auto per-layer alpha adds further separation.
      *
      * Indices and counts are coerced defensively so the function never throws: a non-positive
@@ -97,7 +97,7 @@ public class WaveColors private constructor(
          *
          * The background paints the `top → bottom` gradient, and each layer's fill is sampled from
          * the same two-stop gradient at its depth: back layers lean toward [top], front layers
-         * toward [bottom]. This produces cohesive depth tinting without any black overlay. The
+         * toward [bottom]. This produces depth tinting without any black overlay. The
          * [highlight] is a lightened variant of [top].
          *
          * @param top color at the top of the canvas.
@@ -118,7 +118,7 @@ public class WaveColors private constructor(
 
         /**
          * Builds a "rainbow" palette: every supplied hue is carried by the **wave fills**, while the
-         * **background** is a calm, muted wash so the colorful waves stay the subject.
+         * **background** is a muted wash so the colorful waves stay the subject.
          *
          * Each wave layer is tinted by sampling the full palette at its depth (`fillColorFor(i, n)`
          * evaluates the palette at `i / (n - 1)`), so each layer carries a distinct hue. The
@@ -160,7 +160,7 @@ public class WaveColors private constructor(
          * stops are identical). The per-layer fill **ramps by depth** around [color] (a slightly
          * darker back, a slightly lighter front) instead of repeating it verbatim: a uniform
          * same-color fill would be invisible over the same-color background, so the waves would
-         * disappear — the ramp (plus the auto per-layer alpha, see [autoAlpha]) keeps them visible.
+         * disappear. The ramp (plus the auto per-layer alpha, see [autoAlpha]) keeps them visible.
          * The [highlight] is a lightened variant of [color].
          *
          * @param color the single flat base color; the background is flat, the fills ramp around it.
@@ -181,7 +181,7 @@ public class WaveColors private constructor(
     }
 }
 
-// ── Color resolution helpers (internal to the color model) ─────────────────────────────────────
+// Color resolution helpers (internal to the color model).
 
 /** Floor alpha applied to the back-most layer; the front layer ramps to fully opaque. */
 internal const val BACK_ALPHA_FLOOR: Float = 0.40f

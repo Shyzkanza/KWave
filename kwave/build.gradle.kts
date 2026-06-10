@@ -19,7 +19,7 @@ kotlin {
         publishLibraryVariants("release")
     }
 
-    // Do NOT force isStatic — consumers integrate via SPM/CocoaPods/regular
+    // Do NOT force isStatic. Consumers integrate via SPM/CocoaPods/regular
     // framework as they prefer. Default (dynamic) framework is fine for a library.
     iosArm64()
     iosSimulatorArm64()
@@ -65,7 +65,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    // NO productFlavors — those are app-only concerns.
+    // NO productFlavors. Those are app-only concerns.
 
     testOptions {
         unitTests.isIncludeAndroidResources = true

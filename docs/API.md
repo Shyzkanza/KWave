@@ -1,4 +1,4 @@
-# KWave — Public API Reference
+# KWave: Public API Reference
 
 > Concise reference of every public symbol. See [`DESIGN.md`](./DESIGN.md) for the full narrative,
 > rendering math, and behavior contracts. This list IS the binary-compatibility surface (validated
@@ -10,7 +10,7 @@
 
 ---
 
-## `WaveColors`  — `@Immutable class` (no public constructor)
+## `WaveColors` (`@Immutable class`, no public constructor)
 
 Built only via factories. Resolves background gradient stops, per-layer fill (palette-derived,
 never hardcoded black), and a highlight color. Per-layer alpha is auto by depth unless overridden.
@@ -23,7 +23,7 @@ never hardcoded black), and a highlight color. Per-layer alpha is auto by depth 
 
 ---
 
-## `ShadowMode`  — `sealed interface`
+## `ShadowMode` (`sealed interface`)
 
 Controls per-layer depth shadow band + luminous highlight lip (highlight = inverted shadow logic).
 
@@ -36,7 +36,7 @@ Controls per-layer depth shadow band + luminous highlight lip (highlight = inver
 
 ---
 
-## `WaveLayerSpec`  — `@Immutable class` (advanced/low-level)
+## `WaveLayerSpec` (`@Immutable class`, advanced/low-level)
 
 All values coerced into valid ranges at construction.
 
@@ -58,7 +58,7 @@ class WaveLayerSpec(
 
 ---
 
-## `WaveConfig`  — `@Immutable class`
+## `WaveConfig` (`@Immutable class`)
 
 ```kotlin
 class WaveConfig(
@@ -80,19 +80,19 @@ class WaveConfig(
 fun generate(
     waveCount: Int = 3,     // number of layers, coerced to >= 1
     crests: Float = 1f,     // RELATIVE crest density per layer (1 = baseline, NOT a literal count); then jittered
-    harmonic: Float = 0.25f,// crest ROUGHNESS — 0 = clean rounded sine, higher = choppier (2nd-harmonic weight); then jittered
+    harmonic: Float = 0.25f,// crest ROUGHNESS: 0 = clean rounded sine, higher = choppier (2nd-harmonic weight); then jittered
     spacing: Float = 1f,    // vertical spread; < 1 overlaps layers more, > 1 separates them
     amplitude: Float = 0.03f,// base peak displacement (then jittered per layer)
     variation: Float = 0.4f,// per-layer pseudo-random jitter in [0, 1]; 0 = smooth/uniform
     colors: WaveColors,
     shadow: ShadowMode = ShadowMode.Auto,
     gradientEnd: Float = 0.78f, // background gradient end fraction, coerced [GRADIENT_END_MIN, 1]
-    seed: Int = 0,          // ADVANCED — deterministic jitter seed; leave 0 unless pinning a re-roll/screenshot
+    seed: Int = 0,          // ADVANCED: deterministic jitter seed; leave 0 unless pinning a re-roll/screenshot
 ): WaveConfig
 // auto-distributed static phaseOffset, auto depth-alpha, per-layer breathing, tint sampled from
 // colors. Every per-layer property gets a deterministic seeded jitter scaled by `variation` so
 // layers desync; the jitter is a pure function of `seed`. `variation = 0` drops it. `crests` is a
-// relative density (1 = baseline), not a literal crest count; `harmonic` is its twin — the crest
+// relative density (1 = baseline), not a literal crest count; `harmonic` is its twin, the crest
 // roughness (0 ⇒ pure sine). The low-level WaveLayerSpec.phaseOffset still exists for power users;
 // generate() no longer exposes a high-level phaseSpread param.
 ```
@@ -117,8 +117,8 @@ fun KWave(
 ```
 
 Internal accumulator: `phase = initialPhase + phaseShift`, `time = elapsed * speed`. The ambient
-`phase` is **held constant** — no horizontal drift; the only ambient motion is the per-layer
-amplitude **breathing** driven by `time`, so the surface oscillates in place. `speed` is the
+`phase` is held constant, so there is no horizontal drift; the only ambient motion is the per-layer
+amplitude breathing driven by `time`, so the surface oscillates in place. `speed` is the
 breathing/bob tempo. `phaseShift` is a live external signal that translates the waves horizontally
 on purpose (e.g. a pager offset). `initialPhase` is a per-instance random constant (this overload
 only) so multiple instances don't breathe in lockstep. Lifecycle-aware (pause below STARTED, reset
@@ -137,14 +137,14 @@ fun KWave(
 )
 ```
 
-No internal state / no randomization — identical inputs ⇒ identical pixels (screenshot tests,
+No internal state / no randomization; identical inputs ⇒ identical pixels (screenshot tests,
 external sync).
 
 ---
 
 ## Behavior invariants (binding)
 
-- `modifier` is **honored as-is** in both overloads — renderer uses `Canvas(modifier)`, **never**
+- `modifier` is **honored as-is** in both overloads; the renderer uses `Canvas(modifier)` and **never**
   chains `.fillMaxSize()`.
 - Zero-size guard: renderer returns when `size.minDimension <= 0`.
 - Per-layer fill is **palette-derived**, never a hardcoded `Color.Black`.

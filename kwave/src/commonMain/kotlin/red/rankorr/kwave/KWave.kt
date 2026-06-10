@@ -34,7 +34,7 @@ import kotlin.random.Random
 private const val NANOS_PER_SECOND: Float = 1_000_000_000f
 
 /**
- * Stateless / controlled wave background — a **pure, deterministic function of ([phase], [time])**.
+ * Stateless / controlled wave background. It is a pure, deterministic function of ([phase], [time]).
  *
  * This overload owns no animation state: no `withFrameNanos` loop, no randomized seed, no
  * lifecycle awareness. Identical `(phase, time)` inputs always paint identical pixels, which is
@@ -42,16 +42,16 @@ private const val NANOS_PER_SECOND: Float = 1_000_000_000f
  * position) rely on. The drop-in [KWave] overload delegates to this function with the values its
  * own loop computes.
  *
- * It honors [modifier] verbatim — the renderer never forces `fillMaxSize` (the historical bug it
+ * It honors [modifier] verbatim. The renderer never forces `fillMaxSize` (the historical bug it
  * corrects, see `DESIGN.md` §7). For a full-bleed background, pass `Modifier.fillMaxSize()`. The
  * underlying [drawWaves] applies a zero-size guard, so a degenerate layout never crashes or paints
  * NaN geometry.
  *
  * @param config the wave configuration (layers, colors, shadow mode, gradient end).
  * @param phase horizontal phase applied to every layer (scaled per layer by [WaveLayerSpec.speed]).
- *   Under the drop-in [KWave] this is a constant ambient offset — the visible motion is the
- *   breathing driven by [time] — while a stateless caller may drive it freely (e.g. a pager offset
- *   for deliberate horizontal translation).
+ *   Under the drop-in [KWave] this is a constant ambient offset (the visible motion is the
+ *   breathing driven by [time]), while a stateless caller may drive it freely (e.g. a pager offset
+ *   for horizontal translation).
  * @param time continuous elapsed seconds driving per-layer amplitude breathing.
  * @param modifier layout modifier, honored as-is (pass `Modifier.fillMaxSize()` for full-bleed).
  */
@@ -65,56 +65,56 @@ public fun KWave(
     // Cached paths keyed on layer count: re-created only when the count changes, rewound each frame.
     val paths = rememberWavePaths(config.layers.size)
     Canvas(modifier) {
-        // BUG FIX (DESIGN.md §7): Canvas(modifier) — NO chained .fillMaxSize(); honor the caller.
+        // BUG FIX (DESIGN.md §7): Canvas(modifier) with NO chained .fillMaxSize(); honor the caller.
         drawWaves(config, phase, time, paths)
     }
 }
 
 /**
- * Drop-in animated wave background. This overload **owns its animation loop** and renders the
+ * Drop-in animated wave background. This overload owns its animation loop and renders the
  * waves for you; most callers only need this one.
  *
- * It accumulates elapsed time with an internal `withFrameNanos` loop and derives an **in-place
- * oscillation** — the waves swell and recede rather than travel across the screen:
+ * It accumulates elapsed time with an internal `withFrameNanos` loop and derives an in-place
+ * oscillation: the waves swell and recede rather than travel across the screen.
  *
  * ```
  * phase = phaseShift          // ambient phase is constant: no horizontal travel
  * time  = elapsed * speed     // drives per-layer amplitude breathing (the visible motion)
  * ```
  *
- * The ambient horizontal `phase` is **held constant**, so the surface never slides sideways; the
- * only ambient motion is the per-layer amplitude breathing driven by `time` — each layer swelling at
- * its own (config-driven) rate, smoothly, with no abrupt reversals. [speed] scales how fast that bob
- * is. [phaseShift] is **added live and read on every recomposition**, so an external signal (a pager
- * offset or scroll position) can still translate the wave deliberately without restarting the loop.
+ * The ambient horizontal `phase` is held constant, so the surface never slides sideways. The
+ * only ambient motion is the per-layer amplitude breathing driven by `time`: each layer swells at
+ * its own (config-driven) rate, with no abrupt reversals. [speed] scales how fast that bob
+ * is. [phaseShift] is added live and read on every recomposition, so an external signal (a pager
+ * offset or scroll position) can still translate the wave without restarting the loop.
  * Internally it delegates to the stateless [KWave] overload with the computed `(phase, time)`.
  *
  * Behaviors:
- * - **Lifecycle-aware.** The loop runs only while the host lifecycle is at least
+ * - Lifecycle-aware. The loop runs only while the host lifecycle is at least
  *   [Lifecycle.State.STARTED]; when the app is backgrounded (or the screen leaves the foreground)
- *   it suspends. On resume, the frame clock baseline is reset so the accumulator does **not** jump
- *   forward by the time spent in the background — no visual snap.
- * - **`isPlaying = false`** freezes the animation: the loop suspends and the last `(phase, time)`
+ *   it suspends. On resume, the frame clock baseline is reset so the accumulator does not jump
+ *   forward by the time spent in the background, so there is no visual snap.
+ * - `isPlaying = false` freezes the animation: the loop suspends and the last `(phase, time)`
  *   keeps rendering.
- * - **Reduced motion.** When [respectReducedMotion] is `true` **and** the system reduce-motion
- *   setting is on, KWave renders exactly **one static frame** (computed from [phaseShift] and
+ * - Reduced motion. When [respectReducedMotion] is `true` and the system reduce-motion
+ *   setting is on, KWave renders exactly one static frame (computed from [phaseShift] and
  *   `time = 0`) and never starts the loop. When `false`, the loop runs regardless of the system
  *   setting.
- * - **Per-instance randomized phase.** A `remember`-ed random constant is added to the initial
- *   phase **only in this overload**, so two `KWave`s on the same screen do not march in lockstep.
- *   The stateless overload never randomizes — it stays deterministic.
+ * - Per-instance randomized phase. A `remember`-ed random constant is added to the initial
+ *   phase only in this overload, so two `KWave`s on the same screen do not march in lockstep.
+ *   The stateless overload never randomizes; it stays deterministic.
  *
  * The [modifier] is honored as-is (no forced `fillMaxSize`); pass `Modifier.fillMaxSize()` for a
  * full-bleed background.
  *
  * @param config wave configuration. Default [WaveConfig.Default].
- * @param modifier layout modifier — honored as-is (pass `Modifier.fillMaxSize()` for full-bleed).
+ * @param modifier layout modifier, honored as-is (pass `Modifier.fillMaxSize()` for full-bleed).
  * @param speed breathing-tempo multiplier (faster/slower bob). Default `1`.
  * @param phaseShift live external phase signal (pager/scroll), read every recomposition. Default `0`.
  * @param isPlaying `false` freezes on the current frame. Default `true`.
  * @param respectReducedMotion when `true` (default) and the system reduce-motion setting is on,
  *   render one static frame. `false` is an escape hatch for callers that gate motion themselves
- *   (e.g. via [isPlaying]) — it ignores the system setting, so prefer the default. Default `true`.
+ *   (e.g. via [isPlaying]); it ignores the system setting, so prefer the default. Default `true`.
  */
 @Composable
 public fun KWave(
@@ -125,7 +125,7 @@ public fun KWave(
     isPlaying: Boolean = true,
     respectReducedMotion: Boolean = true,
 ) {
-    // Per-instance random initial phase so multiple instances don't synchronize. RANDOM ONLY here —
+    // Per-instance random initial phase so multiple instances don't synchronize. RANDOM ONLY here;
     // the stateless overload must stay deterministic.
     val initialPhase = remember { Random.nextFloat() * WaveGeometry.TAU }
 
@@ -159,11 +159,11 @@ public fun KWave(
     // inside the loop (last (phase, time) keeps rendering), and speed/phaseShift are read live too.
     LaunchedFrameLoop(running = isResumed, elapsed = elapsed, isPlaying = { currentIsPlaying })
 
-    // No horizontal travel: the ambient phase is held constant (only `phaseShift` — an external
-    // pager/scroll signal — can move it). All motion is the per-layer amplitude breathing, whose
+    // No horizontal travel: the ambient phase is held constant (only `phaseShift`, an external
+    // pager/scroll signal, can move it). All motion is the per-layer amplitude breathing, whose
     // tempo is `time = elapsed * speed`, so the surface oscillates in place (each layer swelling at
-    // its own rate) instead of sliding sideways. Breathing is sinusoidal, so the motion is smooth —
-    // no abrupt direction reversals.
+    // its own rate) instead of sliding sideways. Breathing is sinusoidal, so the motion is smooth,
+    // with no abrupt direction reversals.
     val phase = initialPhase + currentPhaseShift
     val time = elapsed.floatValue * currentSpeed
 
@@ -180,7 +180,7 @@ public fun KWave(
  *
  * Implementation notes that satisfy `DESIGN.md` §10:
  * - The frame-clock baseline (`lastNanos`) is reset on each (re)launch, so resuming after a pause
- *   does not fold the background time into [elapsed] — the wave continues from where it stopped
+ *   does not fold the background time into [elapsed]; the wave continues from where it stopped
  *   rather than snapping forward.
  * - While [isPlaying] reports `false` the accumulator is held constant (the baseline keeps tracking
  *   the clock, so unfreezing does not jump either).

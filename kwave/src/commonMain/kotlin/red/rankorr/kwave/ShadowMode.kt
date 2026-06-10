@@ -52,7 +52,7 @@ public sealed interface ShadowMode {
      */
     public data object FromWave : ShadowMode
 
-    /** Draws **no** shadow band and **no** highlight lip — only the flat per-layer fills over the
+    /** Draws **no** shadow band and **no** highlight lip, only the flat per-layer fills over the
      * background gradient. The depth-FX loop still iterates structurally but paints nothing. */
     public data object None : ShadowMode
 

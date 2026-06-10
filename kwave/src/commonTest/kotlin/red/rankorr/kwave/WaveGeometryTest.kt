@@ -22,7 +22,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Pure JVM geometry tests for [WaveGeometry] — no UI, no Compose runtime. These exercise the exact
+ * Pure JVM geometry tests for [WaveGeometry], no UI, no Compose runtime. These exercise the exact
  * waveform math the renderer delegates to (`DESIGN.md` §2) so a regression in the equations is
  * caught without rendering a single pixel.
  */

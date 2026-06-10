@@ -7,7 +7,7 @@ The `.github/workflows/publish.yml` workflow runs on every `X.Y.Z` tag and reads
 from **GitHub Actions repository secrets**.
 
 This file documents the five secrets the workflow expects, how to obtain each one, the one-time
-namespace verification, and the end-to-end release runbook. It contains **no secret values** — only
+namespace verification, and the end-to-end release runbook. It contains **no secret values**, only
 the names and provisioning steps.
 
 ## Required GitHub Actions secrets
@@ -25,7 +25,7 @@ Configure these under **Settings → Secrets and variables → Actions → New r
 The `ORG_GRADLE_PROJECT_` prefix lets each secret feed the matching Gradle project property without
 any extra wiring in `build.gradle.kts`. The vanniktech plugin reads them automatically.
 
-### 1. Central Portal user token — `mavenCentralUsername` / `mavenCentralPassword`
+### 1. Central Portal user token: `mavenCentralUsername` / `mavenCentralPassword`
 
 Maven Central authenticates with a generated **User Token**, not your account password.
 
@@ -35,9 +35,9 @@ Maven Central authenticates with a generated **User Token**, not your account pa
 4. Store them as `ORG_GRADLE_PROJECT_mavenCentralUsername` and
    `ORG_GRADLE_PROJECT_mavenCentralPassword` respectively.
 
-Regenerating the token invalidates the previous pair — update both secrets together if you rotate it.
+Regenerating the token invalidates the previous pair, so update both secrets together if you rotate it.
 
-### 2. GPG signing key — `signingInMemoryKey` / `signingInMemoryKeyPassword` / `signingInMemoryKeyId`
+### 2. GPG signing key: `signingInMemoryKey` / `signingInMemoryKeyPassword` / `signingInMemoryKeyId`
 
 Maven Central requires every published artifact to be GPG-signed.
 
@@ -62,8 +62,8 @@ Copy the entire block, including the `-----BEGIN PGP PRIVATE KEY BLOCK-----` and
 `-----END PGP PRIVATE KEY BLOCK-----` lines, into `ORG_GRADLE_PROJECT_signingInMemoryKey`.
 GitHub Actions secrets preserve the multi-line value as-is.
 
-- `ORG_GRADLE_PROJECT_signingInMemoryKeyPassword` — the passphrase you set during key generation.
-- `ORG_GRADLE_PROJECT_signingInMemoryKeyId` — optional; set it to the **short** (last 8 chars) key
+- `ORG_GRADLE_PROJECT_signingInMemoryKeyPassword` is the passphrase you set during key generation.
+- `ORG_GRADLE_PROJECT_signingInMemoryKeyId` is optional; set it to the **short** (last 8 chars) key
   id only if your keyring contains more than one secret key, so the plugin selects the right one.
 
 Publish the **public** key to a keyserver so Maven Central can verify the signatures:
@@ -85,13 +85,13 @@ Before the first publish you must verify ownership of the `red.rankorr` namespac
    `rankorr.red` domain (at the apex / root), with the token as the record value. Save it at your DNS
    provider and allow a few minutes for propagation.
 4. Back in the Portal, click **Verify Namespace**. Once it shows as **verified**, you can remove the
-   `TXT` record — verification is a one-time step and stays verified.
+   `TXT` record; verification is a one-time step and stays verified.
 
 Deployments to an unverified namespace are rejected, so confirm verification before tagging a release.
 
 ## Release runbook
 
-CI on `main` runs the unit tests on every push. Releases are cut by pushing a SemVer tag — the
+CI on `main` runs the unit tests on every push. Releases are cut by pushing a SemVer tag. The
 published version is taken **from the tag**, so **no version bump or commit is required**
 (`gradle.properties` stays on `-SNAPSHOT` for local development; the tag overrides it at publish
 time). `publish.yml` builds, signs and uploads the deployment to the Central Portal, then opens a

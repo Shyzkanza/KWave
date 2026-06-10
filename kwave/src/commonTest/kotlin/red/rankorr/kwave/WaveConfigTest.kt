@@ -58,7 +58,7 @@ class WaveConfigTest {
         val zero = WaveConfig(persistentListOf(WaveLayerSpec()), colors, gradientEnd = 0f)
         assertEquals(1f, over.gradientEnd, "gradientEnd > 1 clamps to 1")
         assertEquals(GRADIENT_END_MIN, under.gradientEnd, "gradientEnd below the floor clamps up to GRADIENT_END_MIN")
-        assertEquals(GRADIENT_END_MIN, zero.gradientEnd, "gradientEnd of 0 clamps up — a zero-span gradient is degenerate")
+        assertEquals(GRADIENT_END_MIN, zero.gradientEnd, "gradientEnd of 0 clamps up (a zero-span gradient is degenerate)")
         assertTrue(GRADIENT_END_MIN > 0f, "The gradient-end floor must be strictly positive")
     }
 

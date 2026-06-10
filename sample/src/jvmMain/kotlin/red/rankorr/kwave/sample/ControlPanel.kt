@@ -60,8 +60,8 @@ private const val MAX_SPEED = 4f
  * Floating Material3 control card. Edits the hoisted [state] in place; every change flows into
  * `state.config` and the live [red.rankorr.kwave.KWave] behind it.
  *
- * This is the only place in the sample that touches Material3 — the KWave library itself reads no
- * theme. The card is intentionally compact and scrollable so it fits over the wave on small windows.
+ * This is the only place in the sample that touches Material3. The KWave library itself reads no
+ * theme. The card is compact and scrollable so it fits over the wave on small windows.
  */
 @Composable
 fun ControlPanel(
@@ -73,7 +73,7 @@ fun ControlPanel(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
             // Pin the content color: an alpha-modified surface no longer matches contentColorFor(),
-            // so unspecified text would fall back to black — invisible on the dark card. onSurface
+            // so unspecified text would fall back to black, invisible on the dark card. onSurface
             // keeps every label legible.
             contentColor = MaterialTheme.colorScheme.onSurface,
         ),

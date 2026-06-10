@@ -1,20 +1,20 @@
 name: Publish
 
 # Publishes the library to Maven Central (Sonatype Central Portal) on every
-# SemVer version tag (X.Y.Z, no "v" prefix — e.g. 1.2.3). Runs on macOS so the
+# SemVer version tag (X.Y.Z, no "v" prefix, e.g. 1.2.3). Runs on macOS so the
 # iOS publication variants are built alongside Android/JVM.
 #
 # The published version is taken FROM THE TAG (the tag name overrides VERSION_NAME),
-# so no manual version bump or commit is needed — gradle.properties stays on
+# so no manual version bump or commit is needed. gradle.properties stays on
 # `-SNAPSHOT` for local dev. After uploading, a GitHub Release with auto-generated
 # notes is created for the tag.
 #
 # Required repository secrets:
-#   ORG_GRADLE_PROJECT_mavenCentralUsername  — Central Portal token username
-#   ORG_GRADLE_PROJECT_mavenCentralPassword  — Central Portal token password
-#   ORG_GRADLE_PROJECT_signingInMemoryKey    — ASCII-armored GPG private key
-#   ORG_GRADLE_PROJECT_signingInMemoryKeyPassword — GPG key passphrase
-#   (optional) ORG_GRADLE_PROJECT_signingInMemoryKeyId — short GPG key id
+#   ORG_GRADLE_PROJECT_mavenCentralUsername  (Central Portal token username)
+#   ORG_GRADLE_PROJECT_mavenCentralPassword  (Central Portal token password)
+#   ORG_GRADLE_PROJECT_signingInMemoryKey    (ASCII-armored GPG private key)
+#   ORG_GRADLE_PROJECT_signingInMemoryKeyPassword (GPG key passphrase)
+#   (optional) ORG_GRADLE_PROJECT_signingInMemoryKeyId (short GPG key id)
 #
 # These map to the vanniktech maven-publish plugin's expected Gradle properties,
 # so no extra wiring is needed in build.gradle.kts.
@@ -63,8 +63,8 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.ORG_GRADLE_PROJECT_signingInMemoryKeyPassword }}
         # The sample module has no publishing plugin applied, so :sample is
         # naturally excluded. publishToMavenCentral (automaticRelease = false)
-        # uploads the deployment to the Central Portal but does NOT release it —
-        # the final "Publish" step is performed manually in the Portal UI.
+        # uploads the deployment to the Central Portal but does NOT release it.
+        # The final "Publish" step is performed manually in the Portal UI.
         run: ./gradlew publishToMavenCentral --no-configuration-cache
 
       - name: Create GitHub Release
@@ -74,3 +74,26 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "${{ github.ref_name }}" --title "${{ github.ref_name }}" --generate-notes --verify-tag
+
+  update-readme-version:
+    # After a release, write the released version into the README/docs install
+    # snippets on main, so they always show the latest published version.
+    # (The bot commit uses [skip ci] and does not re-trigger CI.)
+    name: Update install version on main
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Write the released version into README and docs
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          sed -i -E "s/red\.rankorr:kwave:[0-9A-Za-z.-]+/red.rankorr:kwave:$VERSION/g" README.md docs/API.md docs/DESIGN.md
+          sed -i -E "s/(kwave = \")[0-9A-Za-z.-]+(\")/\1$VERSION\2/g" README.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md docs/API.md docs/DESIGN.md
+          git diff --cached --quiet || (git commit -m "docs: set install version to $VERSION [skip ci]" && git push)

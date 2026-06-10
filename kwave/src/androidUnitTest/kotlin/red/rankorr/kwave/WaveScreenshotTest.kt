@@ -30,7 +30,7 @@ import org.robolectric.annotation.GraphicsMode
  * `KWave(config, phase, time)` overload at fixed `(phase, time)` so each PNG is deterministic and
  * stable across runs (no animation loop, no randomization).
  *
- * Capture is THEME-FREE (see [captureWave]) — the library reads no `MaterialTheme`, so no app theme
+ * Capture is THEME-FREE (see [captureWave]): the library reads no `MaterialTheme`, so no app theme
  * wraps the content.
  *
  * Covered cases:
@@ -39,7 +39,7 @@ import org.robolectric.annotation.GraphicsMode
  * - a rainbow palette ([WaveColors.palette])
  * - N=2 layers (minimal depth-FX case)
  * - N=5 layers (extended stack)
- * - a solid / monochrome palette ([WaveColors.solid]) — waves stay visible via the depth ramp
+ * - a solid / monochrome palette ([WaveColors.solid]); waves stay visible via the depth ramp
  * - each shadow mode: [ShadowMode.FromWave], [ShadowMode.Custom] (high alpha), [ShadowMode.None]
  *
  * Workflow: `./gradlew :kwave:recordRoborazziDebug` records goldens, `:kwave:verifyRoborazziDebug`
@@ -156,7 +156,7 @@ class WaveScreenshotTest {
     @Test
     fun screenshot_shadow_custom() {
         // Captures a Custom shadow at a high alpha so the (now-honored) Custom.alpha is visible and
-        // the regression — Custom.alpha being overwritten by the engine default — would be caught.
+        // the regression (Custom.alpha being overwritten by the engine default) would be caught.
         rule.captureWave(
             name = "kwave_shadow_custom",
             config = WaveConfig.generate(

@@ -49,7 +49,7 @@ enum class ColorChoice(val label: String) {
  * composables that read it. The [config] uses `derivedStateOf` so the [WaveConfig] is rebuilt only
  * when a value it actually depends on changes.
  *
- * `speed` deliberately is **not** folded into [config]: it is the drop-in [red.rankorr.kwave.KWave]
+ * `speed` is not folded into [config]: it is the drop-in [red.rankorr.kwave.KWave]
  * overload's own breathing-tempo multiplier parameter, read live by the wave's animation loop, so the
  * sample passes it straight through rather than baking it into the config.
  */
@@ -75,7 +75,7 @@ class WaveControlState {
     /** Amount of per-layer pseudo-random jitter passed to `generate()` (`variation`, `[0, 1]`). */
     var variation by mutableFloatStateOf(DEFAULT_VARIATION)
 
-    /** Seed for the deterministic jitter; bump it (Randomize) to roll a new organic layout. */
+    /** Seed for the deterministic jitter; bump it (Randomize) to roll a new layout. */
     var seed by mutableIntStateOf(DEFAULT_SEED)
 
     /** Vertical fraction at which the background gradient ends (`gradientEnd`, coerced `[0,1]`). */
@@ -123,7 +123,7 @@ class WaveControlState {
 
     /**
      * The live [WaveConfig] derived from the current control values. `speed` is intentionally
-     * excluded — it is a parameter of the drop-in composable, not of the config.
+     * excluded; it is a parameter of the drop-in composable, not of the config.
      */
     val config: State<WaveConfig> = derivedStateOf {
         WaveConfig.generate(

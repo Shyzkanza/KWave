@@ -19,7 +19,7 @@ import kotlin.math.PI
 import kotlin.math.sin
 
 /**
- * Pure wave geometry — no [androidx.compose.ui.graphics.drawscope.DrawScope], no Canvas, no Compose.
+ * Pure wave geometry: no [androidx.compose.ui.graphics.drawscope.DrawScope], no Canvas, no Compose.
  *
  * These functions take the canvas [width]/[height] as plain parameters so the exact same math used
  * by the renderer can be exercised in fast JVM unit tests with no UI. The renderer

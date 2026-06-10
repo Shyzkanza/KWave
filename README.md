@@ -6,15 +6,14 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.3.21-blue.svg?logo=kotlin)](https://kotlinlang.org)
 [![Platforms](https://img.shields.io/badge/Platforms-Android%20%7C%20iOS%20%7C%20JVM-lightgrey.svg)](#platforms)
 
-Animated, customizable layered **wave hero backgrounds** for Compose Multiplatform.
+Animated, customizable layered wave hero backgrounds for Compose Multiplatform.
 
 KWave draws a full-bleed stack of vertically-breathing sinusoidal wave layers on a `Canvas`, with
-depth shading and a luminous crest highlight. The waves **oscillate in place** — each layer swells
-and recedes at its own rate — rather than marching sideways across the screen. It is **theme-free**
-— it reads no `MaterialTheme`; every color is supplied through its own `WaveColors` API — and it
-ships two composable entry points: a drop-in **auto** composable that owns its own animation loop,
-and a **stateless** one that is a pure function of `(phase, time)` for tests and perfect external
-sync.
+depth shading and a crest highlight. The waves oscillate in place: each layer swells and recedes at
+its own rate, rather than marching sideways across the screen. It is theme-free. It reads no
+`MaterialTheme`; every color is supplied through its own `WaveColors` API. It ships two composable
+entry points: a drop-in auto composable that owns its own animation loop, and a stateless one that
+is a pure function of `(phase, time)` for tests and external sync.
 
 ---
 
@@ -31,8 +30,8 @@ iOS is shipped as `iosArm64` + `iosSimulatorArm64`. The JVM target powers a Comp
 
 ## Installation
 
-KWave is published to Maven Central as **`red.rankorr:kwave`**. The version shown in the
-snippets below is an example — the **Maven Central** badge at the top always reflects the
+KWave is published to Maven Central as `red.rankorr:kwave`. The version shown in the
+snippets below is an example. The Maven Central badge at the top always reflects the
 latest published version; use that.
 
 ### Version catalog (`gradle/libs.versions.toml`)
@@ -73,7 +72,7 @@ dependencies {
 
 ## Quick start
 
-The drop-in `KWave` owns its animation loop — pass `Modifier.fillMaxSize()` for a full-screen
+The drop-in `KWave` owns its animation loop. Pass `Modifier.fillMaxSize()` for a full-screen
 background and you are done:
 
 ```kotlin
@@ -88,10 +87,10 @@ fun Hero() {
 ```
 
 That uses `WaveConfig.Default`, a neutral blue-grey preset. The drop-in runs its own loop, so you
-do not advance any clock yourself — the waves breathe in place (swelling and receding) without
+do not advance any clock yourself. The waves breathe in place (swelling and receding) without
 sliding sideways. Everything below customizes it.
 
-> **Sizing:** KWave honors the `modifier` you pass **verbatim** — it never forces `fillMaxSize()`
+> **Sizing:** KWave honors the `modifier` you pass verbatim; it never forces `fillMaxSize()`
 > internally. For a full-bleed background pass `Modifier.fillMaxSize()`; for a bounded banner pass
 > e.g. `Modifier.fillMaxWidth().height(220.dp)`.
 
@@ -103,7 +102,7 @@ sliding sideways. Everything below customizes it.
 
 KWave is theme-free; you choose colors through `WaveColors`, built only through its factories.
 
-**Simple two-color gradient** — back layers lean toward `top`, front layers toward `bottom`:
+**Simple two-color gradient.** Back layers lean toward `top`, front layers toward `bottom`:
 
 ```kotlin
 import androidx.compose.ui.graphics.Color
@@ -118,10 +117,10 @@ val ocean = WaveConfig.generate(
 KWave(config = ocean, modifier = Modifier.fillMaxSize())
 ```
 
-**Rainbow palette** — the rainbow rides the **wave fills**: each layer is tinted by sampling the
-palette at its depth, so every layer carries a distinct hue. The **background** is not the full
-saturated palette — it is a calm, muted two-stop wash derived (darkened) from the palette extremes,
-so the colorful waves stay the subject rather than competing with a loud sky:
+**Rainbow palette.** The rainbow rides the wave fills: each layer is tinted by sampling the
+palette at its depth, so every layer carries a distinct hue. The background is not the full
+saturated palette; it is a muted two-stop wash darkened from the palette extremes, so the colorful
+waves stay the subject rather than competing with a loud sky:
 
 ```kotlin
 val rainbow = WaveConfig.generate(
@@ -139,7 +138,7 @@ val rainbow = WaveConfig.generate(
 ```
 
 A single flat color is available too. So the same-color waves do not vanish into a same-color
-background, `solid()` **ramps the per-layer fill by depth** (slightly darker at the back, lighter at
+background, `solid()` ramps the per-layer fill by depth (slightly darker at the back, lighter at
 the front); auto per-layer alpha adds further separation on top:
 
 ```kotlin
@@ -165,7 +164,7 @@ WaveConfig.generate(colors = ocean.colors, shadow = ShadowMode.Auto)
 // Shadow = the layer's own color darkened; highlight = it lightened.
 WaveConfig.generate(colors = ocean.colors, shadow = ShadowMode.FromWave)
 
-// Flat fills only — no shadow band, no highlight lip.
+// Flat fills only: no shadow band, no highlight lip.
 WaveConfig.generate(colors = ocean.colors, shadow = ShadowMode.None)
 
 // Explicit color + alpha (coerced into [0, 1]) for every layer. The alpha drives the rendered
@@ -175,7 +174,7 @@ WaveConfig.generate(colors = ocean.colors, shadow = ShadowMode.Custom(Color.Blac
 
 ### waveCount / crests / harmonic / spacing / variation / gradientEnd
 
-`WaveConfig.generate` builds a coherent, **organic** stack without hand-tuning each layer:
+`WaveConfig.generate` builds a coherent stack without hand-tuning each layer:
 
 ```kotlin
 val config = WaveConfig.generate(
@@ -188,7 +187,7 @@ val config = WaveConfig.generate(
     colors = ocean.colors,
     shadow = ShadowMode.Auto,
     gradientEnd = 0.78f, // vertical fraction at which the background gradient ends
-    // seed = 0,         // advanced — leave at 0 unless you need a reproducible re-roll (see below)
+    // seed = 0,         // advanced; leave at 0 unless you need a reproducible re-roll (see below)
 )
 ```
 
@@ -198,22 +197,22 @@ from `colors`. On top of the smooth back→front gradient, every per-layer prope
 deterministic, seeded pseudo-random jitter scaled by `variation`, so the layers undulate out of sync
 instead of moving as one rigid block. `crests` and `harmonic` together shape the crests: `crests` is
 a *relative density* (`1` = baseline, higher packs more and tighter crests) rather than a literal
-crest count, while `harmonic` — its natural twin — is the crest *roughness* (`0` is a clean rounded
-sine, higher mixes in more of the second harmonic for choppier, less regular crests). `spacing`
-controls how much the layers overlap vertically: a smaller value bunches them together, a larger one
-separates them. `gradientEnd` sets where the background gradient ends, so you no longer need to
-rebuild a second `WaveConfig` just to tune it.
+crest count. Its twin, `harmonic`, is the crest *roughness* (`0` is a clean rounded sine, higher
+mixes in more of the second harmonic for choppier, less regular crests). `spacing` controls how much
+the layers overlap vertically: a smaller value bunches them together, a larger one separates them.
+`gradientEnd` sets where the background gradient ends, so you no longer need to rebuild a second
+`WaveConfig` just to tune it.
 
 > **`seed` (advanced).** The jitter is a pure function of `seed`, so the same arguments always yield
-> the exact same configuration. Leave `seed` at its default `0` unless you specifically need a
-> reproducible re-roll — a different organic layout, or pinning a screenshot test. It is the last
-> parameter for that reason.
+> the exact same configuration. Leave `seed` at its default `0` unless you need a reproducible
+> re-roll: a different layout, or pinning a screenshot test. It is the last parameter for that
+> reason.
 
 ---
 
 ## Advanced
 
-### Low-level layers — `WaveLayerSpec`
+### Low-level layers: `WaveLayerSpec`
 
 For full control, build the `WaveConfig` from your own immutable list of `WaveLayerSpec`. Every
 value is coerced into a valid range at construction (a negative `amplitude` becomes `0`, a
@@ -244,7 +243,7 @@ and `withAlpha` for the two most common targeted tweaks:
 val tinted = layer.withTint(Color(0xFF80DEEA)).withAlpha(0.6f)
 ```
 
-### Stateless overload — `KWave(config, phase, time)`
+### Stateless overload: `KWave(config, phase, time)`
 
 A pure, deterministic function of `(phase, time)` with no internal animation state. Here `phase` is
 the horizontal phase of every layer (constant for in-place breathing, or a value you drive for
@@ -277,7 +276,7 @@ fun ControlledWave() {
 }
 ```
 
-### Deliberate horizontal translation — pager / scroll
+### Deliberate horizontal translation: pager / scroll
 
 The waves never drift sideways on their own; the only ambient motion is the in-place breathing. When
 you *want* a deliberate horizontal translation (e.g. a hero that follows a pager), feed that signal
@@ -296,10 +295,10 @@ KWave(
 
 Other knobs on the drop-in overload:
 
-- `speed` — breathing-tempo multiplier (how fast the layers bob in place). Default `1`.
-- `phaseShift` — live external phase signal for deliberate horizontal translation. Default `0`.
-- `isPlaying = false` — freezes the animation on the current frame.
-- `respectReducedMotion` (default `true`) — when the system reduce-motion setting is on, KWave
+- `speed` sets the breathing-tempo multiplier (how fast the layers bob in place). Default `1`.
+- `phaseShift` is a live external phase signal for deliberate horizontal translation. Default `0`.
+- `isPlaying = false` freezes the animation on the current frame.
+- `respectReducedMotion` (default `true`): when the system reduce-motion setting is on, KWave
   renders a single static frame instead of starting the loop.
 
 The drop-in overload is lifecycle-aware (it pauses below `STARTED` and resumes without a time jump)
@@ -310,7 +309,7 @@ lockstep.
 
 ## Sample
 
-A Compose Desktop sample app doubles as a live visual test harness — sliders for `waveCount`,
+A Compose Desktop sample app doubles as a live visual test harness. It has sliders for `waveCount`,
 `crests`, `harmonic` (a "Roughness" slider next to "Crests"), `spacing`, `amplitude`, `variation`,
 `speed`, `gradientEnd`, a "Randomize layout" button that bumps the `seed`, plus a shadow-mode
 selector and a gradient/rainbow color switch:
@@ -327,9 +326,9 @@ The sample is not published.
 
 Planned for a future 1.x release (**not yet implemented**):
 
-- **Vertical flip / top-anchor.** Today the fill is always **bottom-anchored** (waves rise from the
-  bottom of the canvas). A planned option will let the waves anchor to the **top** of the canvas and
-  fill **upward**, for headers and inverted hero layouts.
+- **Vertical flip / top-anchor.** Today the fill is always bottom-anchored (waves rise from the
+  bottom of the canvas). A planned option will let the waves anchor to the top of the canvas and
+  fill upward, for headers and inverted hero layouts.
 
 ---
 

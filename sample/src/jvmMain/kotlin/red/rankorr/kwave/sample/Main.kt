@@ -46,7 +46,7 @@ fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
         state = rememberWindowState(width = 1100.dp, height = 720.dp),
-        title = "KWave — Sample",
+        title = "KWave Sample",
     ) {
         // The sample owns its own Material3 theme purely for its control UI. The KWave library reads
         // no MaterialTheme: it is fully theme-free and driven entirely by the WaveConfig built below.
@@ -62,7 +62,7 @@ fun main() = application {
  */
 @Composable
 private fun SampleApp() {
-    // Hoisted, mutable control state — the single source of truth the panel edits and the wave reads.
+    // Hoisted, mutable control state: the single source of truth the panel edits and the wave reads.
     val state = remember { WaveControlState() }
     // Rebuilt automatically whenever any control the config depends on changes (the getters read
     // Compose snapshot state, so `derivedStateOf` re-evaluates only when one of them actually moves).

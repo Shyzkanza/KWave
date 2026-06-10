@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 
-// ── Engine constants (internal to the renderer, never caller-facing) ────────────────────────────
+// Engine constants (internal to the renderer, never caller-facing).
 
 /** Number of polyline samples taken across the width per wave (kept cheap yet smooth). */
 internal const val WAVE_SAMPLES: Int = 96
@@ -49,7 +49,7 @@ private const val FROM_WAVE_LIGHTEN: Float = 0.6f
 private const val LUMINANCE_CUTOFF: Float = 0.5f
 
 /**
- * Cached, reusable [Path] objects for the wave renderer — one "below" path and one "above" path per
+ * Cached, reusable [Path] objects for the wave renderer: one "below" path and one "above" path per
  * layer.
  *
  * The renderer [rewind]s these every frame instead of allocating fresh [Path] instances, which is
@@ -85,19 +85,19 @@ internal fun rememberWavePaths(layerCount: Int): WavePathCache =
  *    `y = height * gradientEnd`;
  * 2. each layer's flat fill (the region below its crest), tinted from the palette (or the layer's
  *    [WaveLayerSpec.tint] override) at the layer's resolved alpha;
- * 3. the depth FX — a soft shadow band and a luminous highlight lip — for every layer **except the
- *    front-most** ([List.dropLast] of size `1`).
+ * 3. the depth FX (a soft shadow band and a luminous highlight lip) for every layer except the
+ *    front-most ([List.dropLast] of size `1`).
  *
- * **`dropLast(1)` depth-FX contract (`DESIGN.md` §8).** The depth FX is applied to all layers
+ * `dropLast(1)` depth-FX contract (`DESIGN.md` §8). The depth FX is applied to all layers
  * except the last because the front-most layer is the opaque "water surface" and needs no soft
  * edge. Using `dropLast(1)` (rather than indexed access) is inherently index-out-of-bounds-safe:
- * - at **N = 0** the per-layer loop and the FX loop both iterate zero times — only the background
+ * - at N = 0 the per-layer loop and the FX loop both iterate zero times: only the background
  *   draws, no crash;
- * - at **N = 1** the single layer is front-most, the FX loop is empty, and it gets a flat fill
+ * - at N = 1 the single layer is front-most, the FX loop is empty, and it gets a flat fill
  *   only;
- * - at **N ≥ 2** layers `0..n-2` get depth FX and layer `n-1` gets a flat fill.
+ * - at N >= 2 layers `0..n-2` get depth FX and layer `n-1` gets a flat fill.
  *
- * **Zero-size guard.** If `size.minDimension <= 0` the function returns immediately, avoiding a
+ * Zero-size guard. If `size.minDimension <= 0` the function returns immediately, avoiding a
  * `x / width` division by zero and any NaN geometry.
  *
  * The caller's `modifier` is honored by the enclosing `Canvas` (the renderer never forces
@@ -144,7 +144,7 @@ internal fun DrawScope.drawWaves(
         drawPath(below, color = fill.copy(alpha = fill.alpha * alpha))
     }
 
-    // 3. Depth FX for every layer except the front-most (dropLast(1)) — IOOB-safe at N=0 and N=1.
+    // 3. Depth FX for every layer except the front-most (dropLast(1)); IOOB-safe at N=0 and N=1.
     if (config.shadow is ShadowMode.None) return
     // Peak opacity of the shadow band: the caller's value for Custom, the engine default otherwise.
     val shadowPeak = shadowPeakAlpha(config.shadow)
@@ -156,7 +156,7 @@ internal fun DrawScope.drawWaves(
         val shadowColor = resolveShadowColor(config.shadow, fill)
         val highlightColor = resolveHighlightColor(config.shadow, fill, config.colors.highlight)
 
-        // Shadow band — reuses the already-built "below" path for this layer when available.
+        // Shadow band: reuses the already-built "below" path for this layer when available.
         val below = paths.below.getOrNull(index) ?: Path().also { buildRegionBelow(it, layer, phase, time) }
         drawPath(
             path = below,
@@ -170,7 +170,7 @@ internal fun DrawScope.drawWaves(
             ),
         )
 
-        // Highlight lip — build the "above" path once and reuse the cached instance.
+        // Highlight lip: build the "above" path once and reuse the cached instance.
         val above = paths.above.getOrNull(index)?.also { it.rewind() } ?: Path()
         buildRegionAbove(above, layer, phase, time)
         drawPath(
@@ -187,7 +187,7 @@ internal fun DrawScope.drawWaves(
     }
 }
 
-// ── Color resolution ───────────────────────────────────────────────────────────────────────────
+// Color resolution.
 
 /**
  * Resolves a layer's fill color: the explicit [WaveLayerSpec.tint] when set, otherwise the
@@ -199,12 +199,12 @@ private fun resolveFill(colors: WaveColors, layer: WaveLayerSpec, index: Int, co
 /**
  * Resolves the shadow-band color for a layer given the [shadow] mode and the layer's local [fill]
  * color, per `DESIGN.md` §4:
- * - [ShadowMode.Auto] — black if the fill is light, white if it is dark (luminance cutoff `0.5`);
- * - [ShadowMode.FromWave] — the fill darkened toward black;
- * - [ShadowMode.Custom] — the supplied color; its **peak opacity** is [ShadowMode.Custom.alpha],
+ * - [ShadowMode.Auto]: black if the fill is light, white if it is dark (luminance cutoff `0.5`);
+ * - [ShadowMode.FromWave]: the fill darkened toward black;
+ * - [ShadowMode.Custom]: the supplied color; its peak opacity is [ShadowMode.Custom.alpha],
  *   applied by the band via [shadowPeakAlpha] (not baked here, so it is not lost to the band's own
  *   alpha stop);
- * - [ShadowMode.None] — never reaches here (the caller short-circuits).
+ * - [ShadowMode.None]: never reaches here (the caller short-circuits).
  *
  * The returned color is the base hue; the renderer applies the band's peak/fade alpha on top (see
  * [shadowPeakAlpha]).
@@ -220,7 +220,7 @@ private fun resolveShadowColor(shadow: ShadowMode, fill: Color): Color = when (s
 /**
  * Peak opacity for the shadow band: the caller-supplied [ShadowMode.Custom.alpha] for a custom
  * shadow, otherwise the engine default [SHADOW_ALPHA]. This is what makes `Custom.alpha` actually
- * drive the rendered band — applying it here (rather than baking it into [resolveShadowColor]) keeps
+ * drive the rendered band. Applying it here (rather than baking it into [resolveShadowColor]) keeps
  * it from being overwritten by the band gradient's own top alpha stop.
  */
 internal fun shadowPeakAlpha(shadow: ShadowMode): Float = when (shadow) {
@@ -229,12 +229,12 @@ internal fun shadowPeakAlpha(shadow: ShadowMode): Float = when (shadow) {
 }
 
 /**
- * Resolves the highlight-lip color, using the **inverted** logic of [resolveShadowColor]:
- * - [ShadowMode.Auto] — for a dark fill the highlight is white; for a light fill it leans to the
+ * Resolves the highlight-lip color, using the inverted logic of [resolveShadowColor]:
+ * - [ShadowMode.Auto]: for a dark fill the highlight is white; for a light fill it leans to the
  *   palette's own [highlight] color (a pure-white lip over a light wave would be invisible);
- * - [ShadowMode.FromWave] — the fill lightened toward white;
- * - [ShadowMode.Custom] — the custom color lightened (the luminous counterpart of the shadow);
- * - [ShadowMode.None] — never reaches here.
+ * - [ShadowMode.FromWave]: the fill lightened toward white;
+ * - [ShadowMode.Custom]: the custom color lightened (the luminous counterpart of the shadow);
+ * - [ShadowMode.None]: never reaches here.
  */
 private fun resolveHighlightColor(shadow: ShadowMode, fill: Color, highlight: Color): Color = when (shadow) {
     is ShadowMode.Auto ->
@@ -244,7 +244,7 @@ private fun resolveHighlightColor(shadow: ShadowMode, fill: Color, highlight: Co
     is ShadowMode.None -> Color.Transparent
 }
 
-// ── Geometry plumbing (math lives in WaveGeometry; this only builds Paths) ───────────────────────
+// Geometry plumbing (math lives in WaveGeometry; this only builds Paths).
 
 /**
  * Vertical crest position for this [DrawScope]'s current size; delegates to [WaveGeometry.waveYAt]
