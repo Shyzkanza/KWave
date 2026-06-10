@@ -32,21 +32,21 @@ import javax.imageio.ImageTypeSpecifier
 import javax.imageio.metadata.IIOMetadataNode
 import javax.imageio.stream.FileImageOutputStream
 
-// Dev tool (not shipped: the sample module is not published). It renders the
-// README hero GIF headlessly, with no external tools. Run: ./gradlew :sample:generateGif
+// Dev tool (not shipped: the sample module is not published). It renders the README
+// preview GIFs headlessly, with no external tools. Run: ./gradlew :sample:generateGif
 
-private const val WIDTH = 640
-private const val HEIGHT = 280
-private const val FORWARD_FRAMES = 28
-private const val TIME_STEP = 0.5f
-private const val FRAME_DELAY_MS = 60
-private const val OUTPUT = "docs/screenshots/kwave.gif"
+private const val FORWARD_FRAMES = 40
+private const val TIME_STEP = 0.45f
+private const val FRAME_DELAY_MS = 70
+private const val OUTPUT_DIR = "docs/screenshots"
 
-fun main() {
-    val config = WaveConfig.generate(
-        waveCount = 5,
-        amplitude = 0.05f,
-        colors = WaveColors.palette(
+private class Look(val name: String, val colors: WaveColors)
+private class Orientation(val suffix: String, val width: Int, val height: Int)
+
+private val LOOKS = listOf(
+    Look(
+        "rainbow",
+        WaveColors.palette(
             listOf(
                 Color(0xFFFF5252),
                 Color(0xFFFFB300),
@@ -55,22 +55,66 @@ fun main() {
                 Color(0xFFAB47BC),
             ),
         ),
-    )
+    ),
+    Look(
+        "ocean",
+        WaveColors.palette(
+            listOf(
+                Color(0xFF90E0EF),
+                Color(0xFF00B4D8),
+                Color(0xFF0077B6),
+                Color(0xFF03045E),
+            ),
+        ),
+    ),
+    Look(
+        "sunset",
+        WaveColors.palette(
+            listOf(
+                Color(0xFFFFD166),
+                Color(0xFFFF8C42),
+                Color(0xFFEF476F),
+                Color(0xFF6A4C93),
+            ),
+        ),
+    ),
+)
 
-    // The stateless KWave is a pure function of (phase, time). Phase stays constant,
-    // so the waves breathe in place. We sweep time to capture the motion.
-    val forward = (0 until FORWARD_FRAMES).map { i -> renderFrame(config, time = i * TIME_STEP) }
-    // Boomerang (forward then reverse) gives a seamless loop without matching periods.
-    val frames = forward + forward.subList(1, forward.size - 1).reversed()
+private val ORIENTATIONS = listOf(
+    Orientation("h", width = 600, height = 250),
+    Orientation("v", width = 300, height = 540),
+)
 
-    val out = File(OUTPUT)
-    out.parentFile?.mkdirs()
-    writeAnimatedGif(frames, FRAME_DELAY_MS, out)
-    println("Wrote ${out.path}: ${frames.size} frames, ${out.length() / 1024} KB")
+fun main() {
+    File(OUTPUT_DIR).mkdirs()
+    for (look in LOOKS) {
+        // Tightly packed, lower-amplitude layers with strong per-layer phase offset, so the wave
+        // lines weave and cross each other (small spacing = overlap, even phase spread = crossings).
+        val config = WaveConfig.generate(
+            waveCount = 6,
+            crests = 1.2f,
+            spacing = 0.4f,
+            amplitude = 0.026f,
+            variation = 0.3f,
+            colors = look.colors,
+        )
+        for (orientation in ORIENTATIONS) {
+            // The stateless KWave is a pure function of (phase, time). Phase stays constant so the
+            // waves breathe in place; we sweep time to capture the motion.
+            val forward = (0 until FORWARD_FRAMES).map { i ->
+                renderFrame(config, orientation.width, orientation.height, time = i * TIME_STEP)
+            }
+            // Boomerang (forward then reverse) gives a seamless loop without matching periods.
+            val frames = forward + forward.subList(1, forward.size - 1).reversed()
+            val out = File("$OUTPUT_DIR/wave-${look.name}-${orientation.suffix}.gif")
+            writeAnimatedGif(frames, FRAME_DELAY_MS, out)
+            println("Wrote ${out.path}: ${frames.size} frames, ${out.length() / 1024} KB")
+        }
+    }
 }
 
-private fun renderFrame(config: WaveConfig, time: Float): BufferedImage {
-    val scene = ImageComposeScene(width = WIDTH, height = HEIGHT, density = Density(1f)) {
+private fun renderFrame(config: WaveConfig, width: Int, height: Int, time: Float): BufferedImage {
+    val scene = ImageComposeScene(width = width, height = height, density = Density(1f)) {
         KWave(config = config, phase = 0f, time = time, modifier = Modifier.fillMaxSize())
     }
     return try {

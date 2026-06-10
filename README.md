@@ -16,17 +16,12 @@ entry points: a drop-in auto composable that owns its own animation loop, and a 
 is a pure function of `(phase, time)` for tests and external sync.
 
 <p align="center">
-  <img src="docs/screenshots/kwave.gif" alt="KWave animated wave background" width="640">
+  <img src="docs/screenshots/wave-rainbow-h.gif" alt="KWave animated wave background" width="640">
 </p>
 
-| Default preset | Two-color gradient | Rainbow palette |
-|:---:|:---:|:---:|
-| ![Default](docs/screenshots/default.png) | ![Gradient](docs/screenshots/gradient.png) | ![Rainbow](docs/screenshots/rainbow.png) |
-| **Solid color** | **`FromWave` shadow** | **`Custom` shadow** |
-| ![Solid](docs/screenshots/solid.png) | ![FromWave](docs/screenshots/shadow-fromwave.png) | ![Custom](docs/screenshots/shadow-custom.png) |
-
-> Regenerate these locally with `./gradlew :kwave:recordRoborazziDebug` (stills) and
-> `./gradlew :sample:generateGif` (the animation).
+> The GIFs are short looped previews (sped up, with a back-and-forth loop), so the motion can look
+> a bit abrupt at the loop seam. Live, the waves breathe slowly and continuously. More palettes and
+> portrait/landscape examples are in the [gallery](docs/GALLERY.md).
 
 ---
 
