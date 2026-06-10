@@ -31,14 +31,15 @@ iOS is shipped as `iosArm64` + `iosSimulatorArm64`. The JVM target powers a Comp
 
 ## Installation
 
-KWave is published to Maven Central under the coordinates
-`red.rankorr:kwave:0.1.0-SNAPSHOT`.
+KWave is published to Maven Central as **`red.rankorr:kwave`**. The version shown in the
+snippets below is an example — the **Maven Central** badge at the top always reflects the
+latest published version; use that.
 
 ### Version catalog (`gradle/libs.versions.toml`)
 
 ```toml
 [versions]
-kwave = "0.1.0-SNAPSHOT"
+kwave = "0.1.0"
 
 [libraries]
 kwave = { module = "red.rankorr:kwave", version.ref = "kwave" }
@@ -60,7 +61,7 @@ kotlin {
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("red.rankorr:kwave:0.1.0-SNAPSHOT")
+    implementation("red.rankorr:kwave:0.1.0")
 }
 ```
 

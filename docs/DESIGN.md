@@ -5,7 +5,7 @@
 > agent (build, renderer, tests, sample, docs) implements against this verbatim. If an
 > implementation detail is ambiguous, this document wins; do not improvise divergent behavior.
 
-- **Maven coordinates:** `red.rankorr:kwave:0.1.0-SNAPSHOT`
+- **Maven coordinates:** `red.rankorr:kwave:0.1.0`
 - **Kotlin package / Android namespace:** `red.rankorr.kwave`
 - **License:** Apache-2.0 — `Copyright 2026 Jessy Bonnotte (Shyzkanza)`
 - **KMP targets:** `androidTarget()`, `iosArm64()`, `iosSimulatorArm64()`, `jvm()`

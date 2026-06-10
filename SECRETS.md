@@ -91,31 +91,25 @@ Deployments to an unverified namespace are rejected, so confirm verification bef
 
 ## Release runbook
 
-CI on `main` validates every push (detekt, API check, unit tests, Roborazzi). Releases are cut by
-pushing a SemVer tag; the `publish.yml` workflow then uploads the deployment to the Central Portal.
+CI on `main` runs the unit tests on every push. Releases are cut by pushing a SemVer tag — the
+published version is taken **from the tag**, so **no version bump or commit is required**
+(`gradle.properties` stays on `-SNAPSHOT` for local development; the tag overrides it at publish
+time). `publish.yml` builds, signs and uploads the deployment to the Central Portal, then opens a
+GitHub Release with auto-generated notes.
 
-1. **Bump the version.** In `gradle.properties`, change `VERSION_NAME` from `X.Y.Z-SNAPSHOT` to the
-   release version `X.Y.Z` (no `v` prefix, no `-SNAPSHOT` suffix).
-2. **Update the changelog.** Move the `[Unreleased]` entries under a new `[X.Y.Z]` heading in
-   `CHANGELOG.md`.
-3. **Commit on `main`.** Commit the version bump and changelog directly on `main`.
-4. **Tag the release.** Create an annotated tag matching the version exactly:
+1. **(Optional) Update the changelog.** Move the `[Unreleased]` entries under a new `[X.Y.Z]`
+   heading in `CHANGELOG.md` and commit on `main`.
+2. **Tag the release** with the exact version (no `v` prefix, no `-SNAPSHOT` suffix), and push it:
    ```bash
    git tag X.Y.Z
-   ```
-5. **Push the commit and the tag.**
-   ```bash
-   git push origin main
    git push origin X.Y.Z
    ```
-   Pushing the `X.Y.Z` tag triggers `publish.yml`, which builds all targets (Android/JVM/iOS) and
-   runs `publishToMavenCentral` to **upload** the deployment to the Central Portal.
-6. **Publish in the Portal.** Because `automaticRelease = false`, the upload is **not** released
+   Pushing the tag triggers `publish.yml`, which builds all targets (Android/JVM/iOS), signs them,
+   uploads the deployment to the Central Portal as version `X.Y.Z`, and creates the GitHub Release.
+3. **Publish in the Portal.** Because `automaticRelease = false`, the upload is **not** released
    automatically. Open <https://central.sonatype.com/>, go to **Deployments**, confirm the
    validation passed, and click **Publish**. The artifacts then sync to Maven Central
    (availability can take a short while to propagate to search and consumers).
-7. **Resume snapshot development.** After the release, bump `VERSION_NAME` back to the next
-   `X.Y.Z-SNAPSHOT` on `main` and commit.
 
 ### Verification
 
