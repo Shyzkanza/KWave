@@ -70,6 +70,7 @@ class WaveScreenshotTest {
             config = WaveConfig.generate(
                 waveCount = 3,
                 colors = WaveColors.gradient(Color(0xFF1565C0), Color(0xFF0D47A1)),
+                seed = 7,
             ),
             phase = 0f,
             time = 0f,
@@ -91,6 +92,7 @@ class WaveScreenshotTest {
                         Color(0xFF1E88E5), // blue
                     ),
                 ),
+                seed = 3,
             ),
             phase = 0f,
             time = 0f,
@@ -104,6 +106,7 @@ class WaveScreenshotTest {
             config = WaveConfig.generate(
                 waveCount = 2,
                 colors = WaveColors.gradient(Color(0xFF2E7D32), Color(0xFF1B5E20)),
+                seed = 5,
             ),
             phase = 0f,
             time = 0f,
@@ -117,6 +120,7 @@ class WaveScreenshotTest {
             config = WaveConfig.generate(
                 waveCount = 5,
                 colors = WaveColors.gradient(Color(0xFF6A1B9A), Color(0xFF311B92)),
+                seed = 11,
             ),
             phase = 0f,
             time = 0f,
@@ -133,6 +137,7 @@ class WaveScreenshotTest {
             config = WaveConfig.generate(
                 waveCount = 4,
                 colors = WaveColors.solid(Color(0xFF00897B)), // teal, like the reported case
+                seed = 13,
             ),
             phase = 0f,
             time = 0f,
@@ -147,6 +152,7 @@ class WaveScreenshotTest {
                 waveCount = 4,
                 colors = WaveColors.gradient(Color(0xFF26A69A), Color(0xFF00695C)),
                 shadow = ShadowMode.FromWave,
+                seed = 19,
             ),
             phase = 0f,
             time = 0f,
@@ -163,6 +169,7 @@ class WaveScreenshotTest {
                 waveCount = 4,
                 colors = WaveColors.gradient(Color(0xFF26A69A), Color(0xFF00695C)),
                 shadow = ShadowMode.Custom(Color(0xFF1A237E), alpha = 0.7f),
+                seed = 19,
             ),
             phase = 0f,
             time = 0f,
@@ -177,6 +184,7 @@ class WaveScreenshotTest {
                 waveCount = 4,
                 colors = WaveColors.gradient(Color(0xFF26A69A), Color(0xFF00695C)),
                 shadow = ShadowMode.None,
+                seed = 19,
             ),
             phase = 0f,
             time = 0f,
@@ -208,6 +216,7 @@ class WaveScreenshotTest {
                 waveCount = 5,
                 variation = 1f,
                 colors = WaveColors.gradient(Color(0xFF455A64), Color(0xFF263238)),
+                seed = 31,
             ),
             phase = 0f,
             time = 0f,

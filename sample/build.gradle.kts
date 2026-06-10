@@ -39,10 +39,10 @@ compose.desktop {
     }
 }
 
-// Dev-only task: render the README hero GIF headlessly (no external tools).
+// Dev-only task: render the preview GIFs headlessly (no external tools).
 tasks.register<JavaExec>("generateGif") {
     group = "kwave"
-    description = "Renders the README hero GIF to docs/screenshots/kwave.gif."
+    description = "Renders the preview GIFs to docs/screenshots/wave-*.gif."
     workingDir = rootProject.projectDir
     val mainCompilation = kotlin.jvm().compilations.getByName("main")
     dependsOn(mainCompilation.compileTaskProvider)

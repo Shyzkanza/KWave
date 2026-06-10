@@ -87,15 +87,17 @@ private val ORIENTATIONS = listOf(
 
 fun main() {
     File(OUTPUT_DIR).mkdirs()
-    for (look in LOOKS) {
+    for ((index, look) in LOOKS.withIndex()) {
         // Tightly packed, lower-amplitude layers with strong per-layer phase offset, so the wave
         // lines weave and cross each other (small spacing = overlap, even phase spread = crossings).
+        // A distinct seed per palette gives each one its own layout, not just a recolor.
         val config = WaveConfig.generate(
             waveCount = 6,
             crests = 1.2f,
             spacing = 0.4f,
             amplitude = 0.026f,
             variation = 0.3f,
+            seed = index + 1,
             colors = look.colors,
         )
         for (orientation in ORIENTATIONS) {
