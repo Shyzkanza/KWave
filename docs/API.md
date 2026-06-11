@@ -5,7 +5,7 @@
 > by binary-compatibility-validator; `api/` dump committed).
 
 - **Package / namespace:** `red.rankorr.kwave`
-- **Coordinates:** `red.rankorr:kwave:0.1.0`
+- **Coordinates:** `red.rankorr:kwave:0.2.0`
 - All public config types are `@Immutable` **regular classes** (not `data class`es) for ABI stability.
 
 ---

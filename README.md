@@ -49,7 +49,7 @@ latest published version; use that.
 
 ```toml
 [versions]
-kwave = "0.1.0"
+kwave = "0.2.0"
 
 [libraries]
 kwave = { module = "red.rankorr:kwave", version.ref = "kwave" }
@@ -71,7 +71,7 @@ kotlin {
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("red.rankorr:kwave:0.1.0")
+    implementation("red.rankorr:kwave:0.2.0")
 }
 ```
 
