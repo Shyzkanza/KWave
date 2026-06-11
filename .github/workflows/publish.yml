@@ -6,8 +6,8 @@ name: Publish
 #
 # The published version is taken FROM THE TAG (the tag name overrides VERSION_NAME),
 # so no manual version bump or commit is needed. gradle.properties stays on
-# `-SNAPSHOT` for local dev. After uploading, a GitHub Release with auto-generated
-# notes is created for the tag.
+# `-SNAPSHOT` for local dev. After uploading, a GitHub Release is created for the
+# tag with notes seeded from the tag's CHANGELOG.md section.
 #
 # Required repository secrets:
 #   ORG_GRADLE_PROJECT_mavenCentralUsername  (Central Portal token username)
@@ -68,12 +68,34 @@ jobs:
         run: ./gradlew publishToMavenCentral --no-configuration-cache
 
       - name: Create GitHub Release
-        # Creates the GitHub Release for the tag with auto-generated notes
-        # (commits / merged PRs since the previous release). Runs only if the
-        # upload above succeeded.
+        # Creates the GitHub Release for the tag with notes extracted from the
+        # matching CHANGELOG.md section. (--generate-notes alone is useless here:
+        # it only lists merged PRs, and this repo commits directly to main, so the
+        # generated body was empty.) Fails loudly if the section is missing so a
+        # release can never ship with blank notes. Runs only if the upload above
+        # succeeded.
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ github.ref_name }}" --title "${{ github.ref_name }}" --generate-notes --verify-tag
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          awk -v ver="$TAG" '
+            $0 ~ "^## \\[" ver "\\]" { found = 1; next }
+            found && /^## \[/ { exit }
+            found && /^\[[^]]+\]: http/ { next }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "::error::CHANGELOG.md has no section for $TAG; add one before tagging."
+            exit 1
+          fi
+          PREV=$(gh release view --json tagName --jq .tagName 2>/dev/null || true)
+          if [ -n "$PREV" ]; then
+            printf '\n**Full Changelog**: https://github.com/%s/compare/%s...%s\n' "$REPO" "$PREV" "$TAG" >> release-notes.md
+          else
+            printf '\n**Full Changelog**: https://github.com/%s/commits/%s\n' "$REPO" "$TAG" >> release-notes.md
+          fi
+          gh release create "$TAG" --title "$TAG" --notes-file release-notes.md --verify-tag
 
   update-readme-version:
     # After a release, write the released version into the README/docs install
