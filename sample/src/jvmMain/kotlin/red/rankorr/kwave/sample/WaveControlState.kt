@@ -81,8 +81,11 @@ class WaveControlState {
     /** Vertical fraction at which the background gradient ends (`gradientEnd`, coerced `[0,1]`). */
     var gradientEnd by mutableFloatStateOf(DEFAULT_GRADIENT_END)
 
-    /** Breathing-tempo multiplier passed to the drop-in KWave overload (NOT part of WaveConfig). */
+    /** Breathing/sway-tempo multiplier passed to the drop-in KWave overload (NOT part of WaveConfig). */
     var speed by mutableFloatStateOf(DEFAULT_SPEED)
+
+    /** Ambient horizontal drift (radians of phase per second) passed to the drop-in KWave overload. */
+    var drift by mutableFloatStateOf(DEFAULT_DRIFT)
 
     // ── ShadowMode selector ──────────────────────────────────────────────────────────────────────
 
@@ -107,6 +110,12 @@ class WaveControlState {
     /** The ordered palette sampled across the wave stack in [ColorChoice.Palette] mode. */
     var paletteColors by mutableStateOf(DEFAULT_PALETTE)
 
+    /**
+     * When `true`, the resolved [WaveColors] gets `withBackground(Color.Transparent)`: KWave skips
+     * its background pass and the sample's demo backdrop shows through behind the waves.
+     */
+    var transparentBackground by mutableStateOf(false)
+
     // ── Derived config ───────────────────────────────────────────────────────────────────────────
 
     private fun resolveShadow(): ShadowMode = when (shadowChoice) {
@@ -116,9 +125,12 @@ class WaveControlState {
         ShadowChoice.Custom -> ShadowMode.Custom(customShadowColor, customShadowAlpha)
     }
 
-    private fun resolveColors(): WaveColors = when (colorChoice) {
-        ColorChoice.Gradient -> WaveColors.gradient(gradientTop, gradientBottom)
-        ColorChoice.Palette -> WaveColors.palette(paletteColors)
+    private fun resolveColors(): WaveColors {
+        val base = when (colorChoice) {
+            ColorChoice.Gradient -> WaveColors.gradient(gradientTop, gradientBottom)
+            ColorChoice.Palette -> WaveColors.palette(paletteColors)
+        }
+        return if (transparentBackground) base.withBackground(Color.Transparent) else base
     }
 
     /**
@@ -150,6 +162,7 @@ class WaveControlState {
         const val DEFAULT_SEED: Int = 0
         const val DEFAULT_GRADIENT_END: Float = 0.78f
         const val DEFAULT_SPEED: Float = 1f
+        const val DEFAULT_DRIFT: Float = 0.05f
         const val DEFAULT_CUSTOM_SHADOW_ALPHA: Float = 0.4f
 
         /** Default rainbow palette for the [ColorChoice.Palette] mode. */

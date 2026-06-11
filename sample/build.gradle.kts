@@ -49,3 +49,13 @@ tasks.register<JavaExec>("generateGif") {
     classpath = files(mainCompilation.output.allOutputs, mainCompilation.runtimeDependencyFiles)
     mainClass.set("red.rankorr.kwave.sample.GifGeneratorKt")
 }
+
+tasks.register<JavaExec>("generatePreview") {
+    group = "kwave"
+    description = "Renders full-size still previews (visual tuning aid) to /tmp/kwave-previews/."
+    workingDir = rootProject.projectDir
+    val mainCompilation = kotlin.jvm().compilations.getByName("main")
+    dependsOn(mainCompilation.compileTaskProvider)
+    classpath = files(mainCompilation.output.allOutputs, mainCompilation.runtimeDependencyFiles)
+    mainClass.set("red.rankorr.kwave.sample.PreviewGeneratorKt")
+}

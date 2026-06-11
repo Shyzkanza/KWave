@@ -15,6 +15,7 @@
  */
 package red.rankorr.kwave.sample
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -25,6 +26,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -68,13 +71,21 @@ private fun SampleApp() {
     // Compose snapshot state, so `derivedStateOf` re-evaluates only when one of them actually moves).
     val config by state.config
 
-    Box(Modifier.fillMaxSize()) {
+    // Demo backdrop, deliberately NOT KWave-looking (diagonal magenta → teal): it is only visible
+    // when "Waves only" makes the library skip its own background pass, proving the transparency.
+    val demoBackdrop = remember {
+        Brush.linearGradient(listOf(Color(0xFF4A148C), Color(0xFF00695C)))
+    }
+
+    Box(Modifier.fillMaxSize().background(demoBackdrop)) {
         // The drop-in KWave owns its own animation loop; it only needs a full-bleed modifier and the
-        // live config. `speed` is exposed as its own breathing-tempo multiplier control.
+        // live config. `speed` (breathing/sway tempo) and `drift` (ambient horizontal travel) are
+        // drop-in parameters, not config values, so they are passed straight through.
         KWave(
             config = config,
             modifier = Modifier.fillMaxSize(),
             speed = state.speed,
+            drift = state.drift,
         )
 
         ControlPanel(

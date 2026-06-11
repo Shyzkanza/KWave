@@ -55,6 +55,7 @@ private const val MAX_HARMONIC = 1.5f
 private const val MAX_SPACING = 2f
 private const val MAX_AMPLITUDE = 0.12f
 private const val MAX_SPEED = 4f
+private const val MAX_DRIFT = 0.5f
 
 /**
  * Floating Material3 control card. Edits the hoisted [state] in place; every change flows into
@@ -129,6 +130,13 @@ fun ControlPanel(
                 valueText = format2(state.speed),
                 onValueChange = { state.speed = it },
                 valueRange = 0f..MAX_SPEED,
+            )
+            LabeledSlider(
+                label = "Drift",
+                value = state.drift,
+                valueText = format3(state.drift),
+                onValueChange = { state.drift = it },
+                valueRange = 0f..MAX_DRIFT,
             )
             LabeledSlider(
                 label = "Gradient end",
@@ -215,6 +223,19 @@ fun ControlPanel(
                         state.paletteColors.forEach { c -> Swatch(c, selected = false, size = 28.dp) }
                     }
                 }
+            }
+            // withBackground(Color.Transparent): the library skips its background pass and the
+            // sample's own demo backdrop shows through behind the waves.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Waves only (transparent background)",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                Switch(
+                    checked = state.transparentBackground,
+                    onCheckedChange = { state.transparentBackground = it },
+                )
             }
         }
     }
