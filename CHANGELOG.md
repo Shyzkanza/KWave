@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   waves to the top of the canvas and fills upward, for headers and inverted hero layouts.
   Today the fill is always bottom-anchored.
 
-## [0.2.0] - Unreleased
+## [0.2.0] - 2026-06-11
 
 More natural motion and a tighter battery/performance contract.
 
