@@ -19,13 +19,14 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
 /**
- * How the depth **shadow band** below each wave crest and the luminous **highlight lip** above it
- * are colored, per layer.
+ * How the diffuse **cast shadow** each wave projects on the content behind it is colored, per
+ * layer.
  *
- * The shadow band is the soft darkening drawn just under each crest (except the front-most layer)
- * that creates edge-less depth; the highlight lip is the bright "water surface" reflection drawn
- * just above the same crests. The highlight always uses the **inverted** logic of the shadow, so a
- * single [ShadowMode] choice controls both consistently.
+ * The cast shadow is the soft, blur-like darkening hugging each crest from above, painted on the
+ * background and the layers further back (never on the wave itself, never on a nearer wave): it
+ * reads as the elevation of stacked translucent sheets and is what separates the layers visually.
+ * The crest **light** is not a shape controlled here: it lives inside each wave's body-fill
+ * gradient, tinted by [WaveColors.highlight].
  *
  * The default is [Auto], which adapts to each layer's local wave color so a single mode looks
  * correct over both light and dark palettes.
@@ -39,26 +40,24 @@ public sealed interface ShadowMode {
      *
      * For each layer the shadow is **black or white**, chosen by the relative luminance of that
      * layer's local wave (fill) color: a **light** wave color gets a **dark (black)** shadow, and a
-     * **dark** wave color gets a **light (white)** shadow. The highlight lip uses the **inverted**
-     * pick (the luminous opposite of the shadow). The luminance cutoff is `0.5` using standard
+     * **dark** wave color gets a **light (white)** shadow (a soft back-glow that reads as
+     * atmospheric light on dark palettes). The luminance cutoff is `0.5` using standard
      * relative luminance (`0.2126*r + 0.7152*g + 0.0722*b`).
      */
     public data object Auto : ShadowMode
 
     /**
      * The shadow is that layer's own color **darkened** (lerped toward [Color.Black] by roughly
-     * `0.6`), and the highlight is the same layer color **lightened** by the inverse amount. This
-     * keeps shadow and highlight in the layer's own hue family rather than neutral black/white.
+     * `0.6`). This keeps the shadow in the layer's own hue family rather than neutral black/white.
      */
     public data object FromWave : ShadowMode
 
-    /** Draws **no** shadow band and **no** highlight lip, only the flat per-layer fills over the
-     * background gradient. The depth-FX loop still iterates structurally but paints nothing. */
+    /** Draws **no** cast shadow, only the per-layer body fills over the background gradient. */
     public data object None : ShadowMode
 
     /**
-     * Explicit, caller-supplied shadow [color] at the given [alpha] for **every** layer's shadow
-     * band. The highlight lip reuses [color] under the inverse-luminance treatment.
+     * Explicit, caller-supplied shadow [color] at the given [alpha] for **every** layer's cast
+     * shadow.
      *
      * [alpha] is coerced into `[0, 1]` at construction so an out-of-range value never reaches the
      * renderer.
@@ -66,7 +65,7 @@ public sealed interface ShadowMode {
      * This is a regular [Immutable] class (not a `data class`) for binary-compatibility stability.
      *
      * @param color the shadow color applied to every layer.
-     * @param alpha the peak opacity of the shadow color, coerced into `[0, 1]`.
+     * @param alpha the total peak opacity of the cast shadow, coerced into `[0, 1]`.
      */
     @Immutable
     public class Custom(

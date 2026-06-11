@@ -34,7 +34,7 @@ import androidx.compose.ui.graphics.lerp
  *    layer's normalized depth. This is the chief correction over the original reference renderer,
  *    which always filled each layer with a hardcoded [Color.Black]; here the fill is **never** black
  *    unless the caller explicitly supplies a black-based palette.
- * 3. [highlight]: the luminous "lip" color drawn above each crest.
+ * 3. [highlight]: the crest-light tint, blended into the top of each wave's body-fill gradient.
  *
  * Per-layer **alpha** is not part of [WaveColors]: it is auto-assigned by depth (see [autoAlpha])
  * unless a [WaveLayerSpec.alpha] override is present.
@@ -59,7 +59,7 @@ public class WaveColors private constructor(
      * for [palette] it is the supplied (coerced) color list; for [solid] it is a single color.
      */
     private val fillStops: List<Color>,
-    /** The luminous highlight-lip color (the renderer fades it in above each crest). */
+    /** The crest-light tint: the renderer blends it into the top of each wave's body-fill gradient. */
     public val highlight: Color,
 ) {
 
@@ -88,6 +88,84 @@ public class WaveColors private constructor(
         val depth = if (count <= 1) 0f else index.toFloat() / (count - 1)
         return sampleStops(fillStops, depth)
     }
+
+    /**
+     * Whether the background has any visible stop. When every stop is fully transparent the
+     * renderer skips the background pass entirely (no full-canvas rect is drawn), which is the
+     * "waves-only" mode enabled by `withBackground(Color.Transparent)`.
+     */
+    internal val hasVisibleBackground: Boolean = backgroundStops.any { it.alpha > 0f }
+
+    /**
+     * Returns a copy of this [WaveColors] with only the **background** replaced by a flat [color];
+     * the wave-fill palette and the highlight are untouched. This decouples the backdrop from the
+     * waves: the factories ([gradient]/[palette]/[solid]) build a coherent scene where both derive
+     * from the same colors, and this override swaps the backdrop afterwards.
+     *
+     * Pass [Color.Transparent] for the **waves-only** mode: the renderer then skips the background
+     * pass entirely, so KWave can sit on top of your own background (an image, another composable).
+     *
+     * @param color the flat background color ([Color.Transparent] disables the background pass).
+     */
+    public fun withBackground(color: Color): WaveColors =
+        WaveColors(
+            backgroundStops = listOf(color, color),
+            fillStops = fillStops,
+            highlight = highlight,
+        )
+
+    /**
+     * Returns a copy of this [WaveColors] with only the **background** replaced by a [top] → [bottom]
+     * vertical gradient; the wave-fill palette and the highlight are untouched (see
+     * [withBackground] for the rationale).
+     *
+     * @param top background color at the top of the canvas.
+     * @param bottom background color at the gradient end (`WaveConfig.gradientEnd`).
+     */
+    public fun withBackground(top: Color, bottom: Color): WaveColors =
+        WaveColors(
+            backgroundStops = listOf(top, bottom),
+            fillStops = fillStops,
+            highlight = highlight,
+        )
+
+    /**
+     * Returns a copy of this [WaveColors] with only the **background** replaced by the ordered
+     * multi-stop [stops] gradient; the wave-fill palette and the highlight are untouched (see
+     * [withBackground] for the rationale).
+     *
+     * Coercion: an **empty** list behaves like `withBackground(Color.Transparent)` (waves-only);
+     * a **single-element** list behaves like the flat-color overload.
+     *
+     * @param stops ordered background gradient stops, top to bottom.
+     */
+    public fun withBackground(stops: List<Color>): WaveColors = when {
+        stops.isEmpty() -> withBackground(Color.Transparent)
+        stops.size == 1 -> withBackground(stops.first())
+        else -> WaveColors(
+            backgroundStops = stops.toList(),
+            fillStops = fillStops,
+            highlight = highlight,
+        )
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is WaveColors) return false
+        return backgroundStops == other.backgroundStops &&
+            fillStops == other.fillStops &&
+            highlight == other.highlight
+    }
+
+    override fun hashCode(): Int {
+        var result = backgroundStops.hashCode()
+        result = 31 * result + fillStops.hashCode()
+        result = 31 * result + highlight.hashCode()
+        return result
+    }
+
+    override fun toString(): String =
+        "WaveColors(backgroundStops=$backgroundStops, fillStops=$fillStops, highlight=$highlight)"
 
     public companion object {
 

@@ -16,6 +16,8 @@
 package red.rankorr.kwave
 
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
@@ -44,24 +46,29 @@ import com.github.takahirom.roborazzi.captureRoboImage
  * @param config the wave configuration to render.
  * @param phase fixed horizontal-phase value (deterministic, no animation loop is used).
  * @param time fixed elapsed-seconds value (deterministic).
+ * @param backdrop optional opaque color painted **behind** KWave; used by the waves-only golden to
+ *   prove a transparent KWave background really lets the content underneath show through.
  */
 fun AndroidComposeTestRule<ActivityScenarioRule<ComponentActivity>, ComponentActivity>.captureWave(
     name: String,
     config: WaveConfig,
     phase: Float = 0f,
     time: Float = 0f,
+    backdrop: Color? = null,
 ) {
     setContent {
         // No app theme, no MaterialTheme: a fixed-size canvas with a neutral black backdrop.
         // The STATELESS KWave overload is used so identical (phase, time) yield identical pixels.
-        KWave(
-            config = config,
-            phase = phase,
-            time = time,
-            modifier = Modifier
-                .size(CAPTURE_WIDTH_DP.dp, CAPTURE_HEIGHT_DP.dp)
-                .fillMaxSize(),
-        )
+        val sized = Modifier
+            .size(CAPTURE_WIDTH_DP.dp, CAPTURE_HEIGHT_DP.dp)
+            .fillMaxSize()
+        if (backdrop != null) {
+            Box(Modifier.background(backdrop)) {
+                KWave(config = config, phase = phase, time = time, modifier = sized)
+            }
+        } else {
+            KWave(config = config, phase = phase, time = time, modifier = sized)
+        }
     }
     waitForIdle()
     onRoot().captureRoboImage("$ROBORAZZI_DIR/$name.png")

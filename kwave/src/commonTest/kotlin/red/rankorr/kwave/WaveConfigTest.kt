@@ -62,6 +62,25 @@ class WaveConfigTest {
         assertTrue(GRADIENT_END_MIN > 0f, "The gradient-end floor must be strictly positive")
     }
 
+    // ── sway coercion / plumbing ─────────────────────────────────────────────────────────────────
+
+    @Test
+    fun sway_defaults_to_one_and_coerces_negative_to_zero() {
+        val default = WaveConfig(persistentListOf(WaveLayerSpec()), colors)
+        val negative = WaveConfig(persistentListOf(WaveLayerSpec()), colors, sway = -2f)
+        val off = WaveConfig(persistentListOf(WaveLayerSpec()), colors, sway = 0f)
+        assertEquals(1f, default.sway, "sway defaults to the nominal weight 1")
+        assertEquals(0f, negative.sway, "A negative sway coerces to 0 (no sway), never flips direction")
+        assertEquals(0f, off.sway, "sway = 0 is the documented pre-0.2.0 escape hatch")
+    }
+
+    @Test
+    fun generate_forwards_sway_to_the_config() {
+        val config = WaveConfig.generate(colors = colors, sway = 0f)
+        assertEquals(0f, config.sway, "generate(sway = 0f) must produce a sway-free config")
+        assertEquals(1f, WaveConfig.generate(colors = colors).sway, "generate defaults to the nominal sway")
+    }
+
     // ── generate(): waveCount coercion ───────────────────────────────────────────────────────────
 
     @Test
@@ -138,26 +157,27 @@ class WaveConfigTest {
         assertTrue(baseFracs.all { it in 0f..1f }, "All baseFrac values must remain in [0,1]")
     }
 
-    // ── N=0 / N=1 dropLast(1) safety ─────────────────────────────────────────────────────────────
+    // ── N=0 / N=1 layer-count safety ─────────────────────────────────────────────────────────────
 
-    // NOTE: The renderer's WavePathCache allocates Compose `Path` objects, which require the Skiko
+    // NOTE: The renderer's WaveRenderCache allocates Compose `Path` objects, which require the Skiko
     // native library and therefore cannot be instantiated in the plain-JVM commonTest runtime. The
-    // dropLast(1) IOOB-safety contract is fully expressible at the layer-list level (below); the
-    // path-cache sizing is exercised in the Robolectric (NATIVE graphics) screenshot suite instead.
+    // renderer's per-layer pass needs no cross-layer indexing (DESIGN.md §8), so the layer-count
+    // contract is fully expressible at the config level (below); the actual rendering at these
+    // counts is exercised in the Robolectric (NATIVE graphics) screenshot suite instead.
 
     @Test
-    fun zero_layers_dropLast_is_empty_and_does_not_throw() {
+    fun zero_layers_config_is_allowed_and_iterates_nothing() {
         val empty = WaveConfig(persistentListOf(), colors)
         assertEquals(0, empty.layers.size, "N=0 config is allowed")
-        // dropLast(1) on an empty list is empty (the depth-FX loop the renderer runs is a no-op).
-        assertEquals(0, empty.layers.dropLast(1).size, "dropLast(1) at N=0 must be empty (IOOB-safe)")
+        // The renderer's per-layer pass iterates the layer list directly: zero iterations at N=0.
+        assertTrue(empty.layers.isEmpty(), "The per-layer pass must have nothing to iterate at N=0")
     }
 
     @Test
-    fun single_layer_dropLast_is_empty_so_only_flat_fill_is_drawn() {
+    fun single_layer_config_is_well_formed() {
         val one = WaveConfig(persistentListOf(WaveLayerSpec()), colors)
-        // At N=1 the single layer is front-most → the depth-FX loop iterates zero times.
-        assertEquals(0, one.layers.dropLast(1).size, "dropLast(1) at N=1 must be empty (no depth FX, no IOOB)")
+        // At N=1 the single layer gets the full interleaved pass (shadow, fill, rim) on its own.
+        assertEquals(1, one.layers.size, "N=1 config is allowed and iterates exactly once")
     }
 
     @Test

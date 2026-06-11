@@ -40,6 +40,7 @@ import org.robolectric.annotation.GraphicsMode
  * - N=2 layers (minimal depth-FX case)
  * - N=5 layers (extended stack)
  * - a solid / monochrome palette ([WaveColors.solid]); waves stay visible via the depth ramp
+ * - a transparent background ([WaveColors.withBackground]) over an opaque backdrop (waves-only)
  * - each shadow mode: [ShadowMode.FromWave], [ShadowMode.Custom] (high alpha), [ShadowMode.None]
  *
  * Workflow: `./gradlew :kwave:recordRoborazziDebug` records goldens, `:kwave:verifyRoborazziDebug`
@@ -188,6 +189,25 @@ class WaveScreenshotTest {
             ),
             phase = 0f,
             time = 0f,
+        )
+    }
+
+    @Test
+    fun screenshot_waves_only_transparent_background() {
+        // withBackground(Color.Transparent) must skip the background pass entirely: the magenta
+        // backdrop shows through the sky region while the waves (and their depth FX) still paint
+        // on top of it.
+        rule.captureWave(
+            name = "kwave_waves_only",
+            config = WaveConfig.generate(
+                waveCount = 3,
+                colors = WaveColors.gradient(Color(0xFF1565C0), Color(0xFF0D47A1))
+                    .withBackground(Color.Transparent),
+                seed = 7,
+            ),
+            phase = 0f,
+            time = 0f,
+            backdrop = Color(0xFFFF00FF),
         )
     }
 

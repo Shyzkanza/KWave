@@ -6,10 +6,10 @@ complexity:
   CyclomaticComplexMethod:
     excludes: ['**/sample/**']
   LongParameterList:
-    # generate() is the high-level factory exposing 10 cohesive tuning knobs by design
-    # (waveCount, crests, phaseSpread, spacing, amplitude, variation, colors, shadow,
-    # gradientEnd, seed); the threshold is exclusive, so 11 admits it.
-    functionThreshold: 11
+    # generate() is the high-level factory exposing 11 cohesive tuning knobs by design
+    # (waveCount, crests, harmonic, spacing, amplitude, variation, colors, shadow,
+    # gradientEnd, seed, sway); the threshold is exclusive, so 12 admits it.
+    functionThreshold: 12
     # WaveLayerSpec is the locked low-level type with 11 tuning fields by design
     # (threshold is exclusive, so 12 admits the 11-param constructor).
     constructorThreshold: 12

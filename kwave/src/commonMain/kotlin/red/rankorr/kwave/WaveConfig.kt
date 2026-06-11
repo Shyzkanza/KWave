@@ -42,6 +42,9 @@ import kotlin.random.Random
  * @param shadow the depth shadow / highlight mode. Default [ShadowMode.Auto].
  * @param gradientEnd vertical fraction at which the background gradient ends, coerced into
  *   `[GRADIENT_END_MIN, 1]` (the floor avoids a degenerate zero-span gradient). Default `0.78`.
+ * @param sway config-wide weight of the crest sway (the slow side-to-side lean of breathing
+ *   layers), coerced to `>= 0`. `1` is the nominal organic sway; `0` disables it entirely,
+ *   restoring the exact pre-0.2.0 waveform (breathing without sway). Default `1`.
  */
 @Immutable
 public class WaveConfig(
@@ -49,6 +52,7 @@ public class WaveConfig(
     public val colors: WaveColors,
     public val shadow: ShadowMode = ShadowMode.Auto,
     gradientEnd: Float = 0.78f,
+    sway: Float = 1f,
 ) {
     /**
      * Vertical fraction at which the background gradient ends, coerced into `[GRADIENT_END_MIN, 1]`.
@@ -58,13 +62,21 @@ public class WaveConfig(
      */
     public val gradientEnd: Float = gradientEnd.coerceIn(GRADIENT_END_MIN, 1f)
 
+    /**
+     * Config-wide weight of the crest sway, coerced to `>= 0`. `1` = nominal, `0` = no sway (the
+     * exact pre-0.2.0 waveform). Per layer the sway amplitude is additionally scaled by
+     * [WaveLayerSpec.breathDepth], so non-breathing layers never sway regardless of this value.
+     */
+    public val sway: Float = sway.coerceAtLeast(0f)
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is WaveConfig) return false
         return layers == other.layers &&
             colors == other.colors &&
             shadow == other.shadow &&
-            gradientEnd == other.gradientEnd
+            gradientEnd == other.gradientEnd &&
+            sway == other.sway
     }
 
     override fun hashCode(): Int {
@@ -72,11 +84,12 @@ public class WaveConfig(
         result = 31 * result + colors.hashCode()
         result = 31 * result + shadow.hashCode()
         result = 31 * result + gradientEnd.hashCode()
+        result = 31 * result + sway.hashCode()
         return result
     }
 
     override fun toString(): String =
-        "WaveConfig(layers=$layers, colors=$colors, shadow=$shadow, gradientEnd=$gradientEnd)"
+        "WaveConfig(layers=$layers, colors=$colors, shadow=$shadow, gradientEnd=$gradientEnd, sway=$sway)"
 
     public companion object {
 
@@ -128,17 +141,18 @@ public class WaveConfig(
          * given a deterministic, seeded pseudo-random jitter (scaled by [variation]) so the layers
          * differ from one another instead of forming one rigid block:
          *
-         * - Independent breathing (the motion): `breathSpeed` is jittered and `breathOffset` is
-         *   fully random, so under the drop-in [KWave] each layer swells and recedes on its own
-         *   schedule, never pulsing in unison. This is the only animated dimension.
+         * - Independent breathing and sway (the time-driven motion): `breathSpeed` is jittered and
+         *   `breathOffset` is fully random, so under the drop-in [KWave] each layer swells, recedes
+         *   and sways on its own schedule, never pulsing in unison.
          * - Varied amplitude: per-layer `amplitude` wobbles around the requested value, so crests
          *   are not all the same height.
          * - Crest shape: [crests] sets how dense the crests are and [harmonic] how round vs
          *   choppy they look; both are jittered per layer so no two layers share an identical profile.
-         * - Staggered crests (static): per-layer `phaseOffset`/`speed` give each layer a
-         *   different horizontal crest position (an even `(i / waveCount) * 2π` distribution plus a
-         *   random scatter). This is a *static* stagger, **not** motion: the drop-in holds the
-         *   ambient phase constant.
+         * - Staggered crests: per-layer `phaseOffset`/`speed` give each layer a different
+         *   horizontal crest position (an even `(i / waveCount) * 2π` distribution plus a random
+         *   scatter). Under the drop-in's slow ambient drift the per-layer `speed` also produces a
+         *   gentle parallax (each layer translating at its own rate); with `drift = 0` it is a
+         *   purely static stagger.
          * - Depth alpha / palette tint: left `null`, so alpha is auto-assigned by depth (back
          *   transparent → front opaque) and the fill is sampled from [colors] at the layer's depth.
          * - Vertical stacking / overlap: `baseFrac` is spread around the canvas middle by
@@ -167,6 +181,8 @@ public class WaveConfig(
          *   `[GRADIENT_END_MIN, 1]`. Default `0.78`.
          * @param seed *advanced*: seed for the deterministic jitter; leave at `0` unless you need a
          *   reproducible re-roll or to pin a screenshot. Default `0`.
+         * @param sway config-wide weight of the crest sway, coerced to `>= 0` (see
+         *   [WaveConfig.sway]); `0` disables the sway (the pre-0.2.0 waveform). Default `1`.
          */
         public fun generate(
             waveCount: Int = 3,
@@ -179,6 +195,7 @@ public class WaveConfig(
             shadow: ShadowMode = ShadowMode.Auto,
             gradientEnd: Float = 0.78f,
             seed: Int = 0,
+            sway: Float = 1f,
         ): WaveConfig {
             val count = waveCount.coerceAtLeast(1)
             val amount = variation.coerceIn(0f, 1f)
@@ -197,8 +214,8 @@ public class WaveConfig(
                     baseFrac = center + (depth - 0.5f) * spread + jitter(BASE_JITTER),
                     // Amplitude wobbles around the requested value so crests vary in height.
                     amplitude = amplitude * (1f + jitter(AMP_JITTER)),
-                    // Per-layer horizontal-shift magnitude varies around a back→front baseline; with
-                    // the constant ambient phase this is a static crest offset, not motion.
+                    // Per-layer horizontal-shift magnitude varies around a back→front baseline: a
+                    // static crest offset, plus a gentle parallax under the drop-in's ambient drift.
                     speed = (SPEED_BACK + (SPEED_FRONT - SPEED_BACK) * depth) * (1f + jitter(SPEED_JITTER)),
                     // Even distribution plus a random scatter.
                     phaseOffset = (i.toFloat() / count) * TAU + jitter(PHASE_JITTER),
@@ -216,6 +233,7 @@ public class WaveConfig(
                 colors = colors,
                 shadow = shadow,
                 gradientEnd = gradientEnd,
+                sway = sway,
             )
         }
     }
@@ -235,8 +253,8 @@ private const val BASE_BACK: Float = 0.45f
 private const val BASE_FRONT: Float = 0.65f
 private const val SPEED_BACK: Float = 1.0f
 private const val SPEED_FRONT: Float = 0.7f
-// Breathing is the only visible ambient motion now, so it is given a clear depth and per-layer
-// tempo variety (the differing per-layer rates make each surface move on its own).
+// Breathing (and the sway derived from it) carries most of the ambient motion, so it is given a
+// clear depth and per-layer tempo variety (the differing rates make each surface move on its own).
 private const val BREATH_DEPTH_BASE: Float = 0.28f
 private const val BREATH_DEPTH_STEP: Float = 0.10f
 private const val BREATH_SPEED_BASE: Float = 0.28f

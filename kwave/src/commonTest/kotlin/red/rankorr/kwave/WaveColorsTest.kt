@@ -162,4 +162,111 @@ class WaveColorsTest {
         val colors = WaveColors.gradient(top, bottom)
         assertEquals(top, colors.fillColorFor(0, 1), "A single layer (count=1) samples depth 0 → top color")
     }
+
+    // ── Structural equality (cache-key contract) ─────────────────────────────────────────────────
+
+    @Test
+    fun waveColors_factories_produce_structurally_equal_instances() {
+        // Two separate factory calls with the same inputs must be equal: the renderer's
+        // remember(config)-keyed cache (and any caller-side remember) relies on structural equality
+        // to survive a config rebuilt with identical values.
+        assertEquals(WaveColors.gradient(top, bottom), WaveColors.gradient(top, bottom))
+        assertEquals(WaveColors.solid(top), WaveColors.solid(top))
+        assertEquals(WaveColors.palette(listOf(top, bottom)), WaveColors.palette(listOf(top, bottom)))
+        assertEquals(
+            WaveColors.gradient(top, bottom).hashCode(),
+            WaveColors.gradient(top, bottom).hashCode(),
+            "Equal instances must share a hash code",
+        )
+    }
+
+    @Test
+    fun waveColors_different_inputs_are_not_equal() {
+        assertTrue(
+            WaveColors.gradient(top, bottom) != WaveColors.gradient(bottom, top),
+            "Swapped gradient endpoints must not compare equal",
+        )
+        assertTrue(
+            WaveColors.solid(top) != WaveColors.gradient(top, bottom),
+            "Different factories with different stops must not compare equal",
+        )
+    }
+
+    // ── withBackground: decoupling the backdrop from the wave palette ────────────────────────────
+
+    @Test
+    fun withBackground_replaces_only_the_background_stops() {
+        val base = WaveColors.gradient(top, bottom)
+        val sky = Color(0xFF101820)
+        val overridden = base.withBackground(sky, Color.Black)
+
+        assertEquals(listOf(sky, Color.Black), overridden.backgroundStops, "Background stops must be replaced")
+        assertEquals(base.highlight, overridden.highlight, "The highlight must be untouched")
+        for (i in 0 until 4) {
+            assertEquals(
+                base.fillColorFor(i, 4),
+                overridden.fillColorFor(i, 4),
+                "The wave-fill palette must be untouched (layer $i)",
+            )
+        }
+    }
+
+    @Test
+    fun withBackground_single_color_is_a_flat_background() {
+        val sky = Color(0xFF101820)
+        assertEquals(
+            listOf(sky, sky),
+            WaveColors.gradient(top, bottom).withBackground(sky).backgroundStops,
+            "A single background color must duplicate into a well-defined flat gradient",
+        )
+    }
+
+    @Test
+    fun withBackground_list_coercion_matches_documented_rules() {
+        val base = WaveColors.gradient(top, bottom)
+        assertEquals(
+            listOf(Color.Transparent, Color.Transparent),
+            base.withBackground(emptyList()).backgroundStops,
+            "An empty stop list must behave like a transparent (waves-only) background",
+        )
+        assertEquals(
+            listOf(top, top),
+            base.withBackground(listOf(top)).backgroundStops,
+            "A single-element list must behave like the flat-color overload",
+        )
+        assertEquals(
+            listOf(top, bottom, Color.Black),
+            base.withBackground(listOf(top, bottom, Color.Black)).backgroundStops,
+            "A multi-stop list must be carried verbatim",
+        )
+    }
+
+    @Test
+    fun transparent_background_disables_the_background_pass() {
+        val base = WaveColors.gradient(top, bottom)
+        assertTrue(base.hasVisibleBackground, "Factory backgrounds are visible by default")
+        assertTrue(
+            !base.withBackground(Color.Transparent).hasVisibleBackground,
+            "A fully transparent background must let the renderer skip the background pass",
+        )
+        assertTrue(
+            base.withBackground(top.copy(alpha = 0.2f)).hasVisibleBackground,
+            "A partially transparent background is still a visible background",
+        )
+    }
+
+    @Test
+    fun withBackground_keeps_structural_equality() {
+        val sky = Color(0xFF101820)
+        assertEquals(
+            WaveColors.gradient(top, bottom).withBackground(sky),
+            WaveColors.gradient(top, bottom).withBackground(sky),
+            "Equal withBackground overrides must compare equal (cache-key contract)",
+        )
+        assertNotEquals(
+            WaveColors.gradient(top, bottom).withBackground(sky),
+            WaveColors.gradient(top, bottom),
+            "An overridden background must not compare equal to the original",
+        )
+    }
 }
