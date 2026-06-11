@@ -13,7 +13,90 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   waves to the top of the canvas and fills upward, for headers and inverted hero layouts.
   Today the fill is always bottom-anchored.
 
-## [0.1.0] - Unreleased
+## [0.2.0] - Unreleased
+
+More natural motion and a tighter battery/performance contract.
+
+> **Note:** the drop-in `KWave` overload gained two parameters, which changes its binary signature.
+> Source-compatible (the new parameters are trailing with defaults), but consumers compiled against
+> 0.1.0 must recompile — standard for a 0.x minor.
+
+### Added
+
+- **Crest sway**: each breathing layer's crests now lean slowly side to side on top of the
+  amplitude breathing, so the surface rolls organically instead of only pulsing vertically. The
+  sway is scaled by the layer's `breathDepth` (a `breathDepth = 0` layer has zero sway and stays
+  fully static), runs slower than the breathing, and is phase-decorrelated from it per layer.
+- **Elevation-style depth shading.** Each wave now casts a diffuse, blur-like shadow on the
+  content **behind** it (background and further-back layers), like stacked translucent sheets,
+  and its crest is gently lit from **inside the fill** (the top of each wave's gradient is lifted
+  toward `WaveColors.highlight`) instead of carrying a separate highlight shape — a thin band
+  tracing a wide crest read as a "string". The render pass is interleaved per layer
+  (shadow → fill, back to front), so a shadow can never bleed over a nearer wave — the 0.1.x
+  two-pass design let back-layer shadows smear across the front waves, and its straight vertical
+  fades washed the waves instead of shading their edges. `ShadowMode` keeps its semantics for the
+  shadow (`Auto` by luminance, `Custom.alpha` = the shadow's total peak opacity, `None` disables
+  it), and every layer now gets the FX, including the front-most.
+- **Per-wave depth gradient fill.** Each layer's body is now painted with a subtle vertical
+  gradient (its palette color at the crest, slightly darkened toward the bottom) instead of a flat
+  color, giving every wave internal depth.
+- **`WaveColors.withBackground(...)`**: decouples the backdrop from the wave palette. The factories
+  still build a coherent scene from one set of colors; `withBackground(color)` /
+  `withBackground(top, bottom)` / `withBackground(stops)` then replace **only** the background,
+  leaving the wave fills and highlight untouched. `withBackground(Color.Transparent)` is the
+  **waves-only** mode: the renderer skips the background pass entirely, so KWave can sit on top of
+  caller-provided content (locked by the new `kwave_waves_only` golden).
+- **`sway` parameter on `WaveConfig` and `WaveConfig.generate`**: the config-wide weight of the
+  crest sway, coerced `>= 0`. `1` (default) is the nominal organic roll; `0f` disables the sway and
+  restores the exact 0.1.x waveform (breathing without sway).
+- **`drift` parameter on the drop-in `KWave`**: a gentle ambient horizontal travel in radians of
+  phase per second, parallaxed per layer by `WaveLayerSpec.speed`. Default `0.05` (a full phase
+  cycle ≈ 2 minutes); `0f` removes the travel. Combine `drift = 0f` with `WaveConfig.sway = 0f` to
+  fully restore the in-place motion of 0.1.x.
+- **`maxFps` parameter on the drop-in `KWave`**: an optional cap on the animation update rate.
+  Skipped frames publish no state, so nothing is invalidated, re-drawn, or composited — a large
+  battery win on 120 Hz displays (`24`–`30` is usually indistinguishable for this slow motion).
+  `<= 0` (the default) updates on every display frame.
+
+### Changed
+
+- **Default drop-in motion is now breathing + crest sway + slow drift** (was: strictly in-place
+  breathing). Both new strands are subtle and sinusoidal, and each has an off switch (`drift = 0f`,
+  `WaveConfig.sway = 0f`).
+- **The stateless `KWave(config, phase, time)` overload paints different pixels than 0.1.0** for
+  layers with `breathDepth > 0` (the sway term participates in the waveform; it stays a pure
+  deterministic function of its inputs). Downstream screenshot goldens must be re-recorded, or pass
+  a `WaveConfig` with `sway = 0f` for the 0.1.x waveform.
+- **`speed` and `drift` are integrated per frame** instead of being multiplied by the total
+  elapsed time, so changing either live (a slider, an animated transition) alters the tempo from
+  that frame on without snapping the accumulated position. Note that `speed` does not scale
+  `drift`; use `isPlaying = false` to freeze all motion.
+- **Frame-driven state is read in the draw phase.** A running animation now invalidates only the
+  draw pass; the `KWave` composable no longer recomposes on every frame.
+- **The renderer caches all frame-invariant paint objects.** The background gradient, per-layer
+  resolved fill colors, and per-layer shadow/highlight band brushes are rebuilt only when the
+  config or the canvas height changes; a steady frame allocates zero `Path`s and zero `Brush`es
+  (previously the brushes were re-created every frame). The `Path` cache survives any config change
+  that keeps the layer count.
+- **The waveform engine computes in double precision** and the drop-in integrates elapsed time in
+  double precision, so the motion keeps frame-level smoothness after days of continuous runtime
+  (kiosk / always-on screens). A `Float` seconds accumulator degraded after a few hours.
+- **`WaveColors` now implements structural equality** (`equals`/`hashCode`/`toString`). Two factory
+  calls with identical inputs compare equal, so a `WaveConfig` rebuilt with the same values keeps
+  matching `remember` keys (including the renderer's internal cache) instead of being treated as a
+  new configuration.
+
+### Fixed
+
+- **`isPlaying = false` no longer pumps frames.** The frozen loop previously kept a
+  `withFrameNanos` pending on every frame (only to track the clock baseline), forcing the frame
+  clock to keep producing frames at the display rate while visually frozen. The loop now truly
+  suspends (zero frames, zero rendering work) and resumes without a time jump.
+- **Changing `speed` mid-animation no longer snaps the wave.** It was previously multiplied by the
+  total elapsed time, so a live change rescaled all accumulated history (the jump grew with
+  uptime); it is now integrated per frame (see *Changed*).
+
+## [0.1.0] - 2026-06-10
 
 Initial release of KWave: animated, customizable layered wave hero backgrounds for Compose
 Multiplatform.
@@ -89,5 +172,6 @@ Multiplatform.
   at a small positive minimum (`GRADIENT_END_MIN ≈ 0.04`), so the background `verticalGradient` never
   spans zero height (which painted a flat, broken color).
 
-[Unreleased]: https://github.com/Shyzkanza/KWave/compare/0.1.0...HEAD
+[Unreleased]: https://github.com/Shyzkanza/KWave/compare/0.2.0...HEAD
+[0.2.0]: https://github.com/Shyzkanza/KWave/compare/0.1.0...0.2.0
 [0.1.0]: https://github.com/Shyzkanza/KWave/releases/tag/0.1.0

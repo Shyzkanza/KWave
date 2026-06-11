@@ -3,8 +3,9 @@
 Animated previews and preset stills. Back to the [README](../README.md).
 
 > These GIFs are short looped previews: they are sped up and use a back-and-forth (ping-pong) loop,
-> so the motion can look a bit abrupt at the loop seam. The live animation is a slow, continuous
-> in-place breathing.
+> so the motion can look a bit abrupt at the loop seam. The live animation is slow and continuous:
+> the layers breathe, their crests sway gently, and the surface drifts sideways with a touch of
+> parallax.
 
 ## Animated, landscape
 

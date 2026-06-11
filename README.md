@@ -8,12 +8,15 @@
 
 Animated, customizable layered wave hero backgrounds for Compose Multiplatform.
 
-KWave draws a full-bleed stack of vertically-breathing sinusoidal wave layers on a `Canvas`, with
-depth shading and a crest highlight. The waves oscillate in place: each layer swells and recedes at
-its own rate, rather than marching sideways across the screen. It is theme-free. It reads no
-`MaterialTheme`; every color is supplied through its own `WaveColors` API. It ships two composable
-entry points: a drop-in auto composable that owns its own animation loop, and a stateless one that
-is a pure function of `(phase, time)` for tests and external sync.
+KWave draws a full-bleed stack of vertically-breathing sinusoidal wave layers on a `Canvas`. Each
+wave is filled with a subtle depth gradient, and the shadow and highlight hug the crest curve with
+a soft falloff. The motion is organic, water-like: each layer's amplitude breathes (swells and
+recedes) at its own rate, its crests sway slowly side to side, and the whole surface drifts gently
+sideways with per-layer parallax. Each strand has its own off switch (`drift = 0f`,
+`WaveConfig.sway = 0f`). It is theme-free. It reads no `MaterialTheme`; every color is supplied
+through its own `WaveColors` API. It ships two composable entry points: a drop-in auto composable
+that owns its own animation loop, and a stateless one that is a pure function of `(phase, time)`
+for tests and external sync.
 
 <p align="center">
   <img src="docs/screenshots/wave-rainbow-h.gif" alt="KWave animated wave background" width="640">
@@ -95,8 +98,8 @@ fun Hero() {
 ```
 
 That uses `WaveConfig.Default`, a neutral blue-grey preset. The drop-in runs its own loop, so you
-do not advance any clock yourself. The waves breathe in place (swelling and receding) without
-sliding sideways. Everything below customizes it.
+do not advance any clock yourself. The waves breathe (swelling and receding), their crests sway
+slowly, and the surface drifts gently sideways. Everything below customizes it.
 
 > **Sizing:** KWave honors the `modifier` you pass verbatim; it never forces `fillMaxSize()`
 > internally. For a full-bleed background pass `Modifier.fillMaxSize()`; for a bounded banner pass
@@ -157,26 +160,45 @@ val flat = WaveColors.solid(Color(0xFF263238))
 > `solid(c)`. A `gradient(top, bottom)` whose two colors are equal also routes through `solid()`, so
 > a monochrome gradient stays visible the same way.
 
+**Decoupling the background from the waves.** Each factory builds a coherent scene where the
+backdrop and the wave palette derive from the same colors. When you want them independent, chain
+`withBackground(...)`: it replaces only the background, leaving the wave fills and highlight
+untouched:
+
+```kotlin
+// Rainbow waves over a custom near-black sky.
+val custom = WaveColors.palette(rainbow).withBackground(Color(0xFF101820))
+
+// Waves only, no background at all: KWave sits on top of your own content
+// (an image, another composable). The renderer skips the background pass entirely.
+val wavesOnly = WaveColors.gradient(Color(0xFF1565C0), Color(0xFF0D47A1))
+    .withBackground(Color.Transparent)
+```
+
+`withBackground` also accepts `(top, bottom)` for a gradient backdrop or a `List<Color>` for
+multi-stop skies.
+
 ### Shadow modes
 
-`ShadowMode` controls both the depth shadow band below each crest and the luminous highlight lip
-above it. The default, `Auto`, adapts per layer to the local wave color so one mode looks correct
-over light and dark palettes alike.
+`ShadowMode` controls the diffuse cast shadow each wave projects on the content behind it — the
+soft elevation that separates the layers. The default, `Auto`, adapts per layer to the local wave
+color so one mode looks correct over light and dark palettes alike. (The crest light is part of
+each wave's fill gradient, tinted by `WaveColors.highlight`, and is not affected by `ShadowMode`.)
 
 ```kotlin
 import red.rankorr.kwave.ShadowMode
 
-// Default: per-layer black/white by luminance (light wave -> dark shadow, dark wave -> light).
+// Default: per-layer black/white by luminance (light wave -> dark shadow, dark wave -> back-glow).
 WaveConfig.generate(colors = ocean.colors, shadow = ShadowMode.Auto)
 
-// Shadow = the layer's own color darkened; highlight = it lightened.
+// Shadow = the layer's own color darkened (stays in the palette's hue family).
 WaveConfig.generate(colors = ocean.colors, shadow = ShadowMode.FromWave)
 
-// Flat fills only: no shadow band, no highlight lip.
+// Fills only: no cast shadow.
 WaveConfig.generate(colors = ocean.colors, shadow = ShadowMode.None)
 
 // Explicit color + alpha (coerced into [0, 1]) for every layer. The alpha drives the rendered
-// shadow band's peak opacity (here a softer 0.3).
+// shadow's total peak opacity (here a softer 0.3).
 WaveConfig.generate(colors = ocean.colors, shadow = ShadowMode.Custom(Color.Black, alpha = 0.3f))
 ```
 
@@ -199,17 +221,19 @@ val config = WaveConfig.generate(
 )
 ```
 
-The generator auto-distributes each layer's static horizontal phase offset, auto-assigns depth-based
-alpha (back transparent → front opaque), adds per-layer breathing, and samples each layer's tint
-from `colors`. On top of the smooth back→front gradient, every per-layer property gets a
-deterministic, seeded pseudo-random jitter scaled by `variation`, so the layers undulate out of sync
-instead of moving as one rigid block. `crests` and `harmonic` together shape the crests: `crests` is
-a *relative density* (`1` = baseline, higher packs more and tighter crests) rather than a literal
-crest count. Its twin, `harmonic`, is the crest *roughness* (`0` is a clean rounded sine, higher
-mixes in more of the second harmonic for choppier, less regular crests). `spacing` controls how much
-the layers overlap vertically: a smaller value bunches them together, a larger one separates them.
-`gradientEnd` sets where the background gradient ends, so you no longer need to rebuild a second
-`WaveConfig` just to tune it.
+The generator auto-distributes each layer's horizontal phase offset, auto-assigns depth-based
+alpha (back transparent → front opaque), adds per-layer breathing and sway, and samples each
+layer's tint from `colors`. On top of the smooth back→front gradient, every per-layer property gets
+a deterministic, seeded pseudo-random jitter scaled by `variation`, so the layers undulate out of
+sync instead of moving as one rigid block. `crests` and `harmonic` together shape the crests:
+`crests` is a *relative density* (`1` = baseline, higher packs more and tighter crests) rather than
+a literal crest count. Its twin, `harmonic`, is the crest *roughness* (`0` is a clean rounded sine,
+higher mixes in more of the second harmonic for choppier, less regular crests). `spacing` controls
+how much the layers overlap vertically: a smaller value bunches them together, a larger one
+separates them. `gradientEnd` sets where the background gradient ends, so you no longer need to
+rebuild a second `WaveConfig` just to tune it. `sway` (also available directly on `WaveConfig`)
+weights the slow side-to-side lean of the breathing crests: `1` is the nominal organic roll, `0f`
+turns it off and restores the pure vertical breathing of 0.1.x.
 
 > **`seed` (advanced).** The jitter is a pure function of `seed`, so the same arguments always yield
 > the exact same configuration. Leave `seed` at its default `0` unless you need a reproducible
@@ -254,9 +278,10 @@ val tinted = layer.withTint(Color(0xFF80DEEA)).withAlpha(0.6f)
 ### Stateless overload: `KWave(config, phase, time)`
 
 A pure, deterministic function of `(phase, time)` with no internal animation state. Here `phase` is
-the horizontal phase of every layer (constant for in-place breathing, or a value you drive for
-deliberate horizontal translation) and `time` advances the per-layer amplitude breathing. Drive it
-yourself for screenshot tests or to advance time however you like:
+the horizontal phase of every layer (constant for in-place motion, advanced slowly for drift, or a
+value you drive for deliberate horizontal translation) and `time` advances the per-layer amplitude
+breathing and crest sway. Drive it yourself for screenshot tests or to advance time however you
+like:
 
 ```kotlin
 import androidx.compose.runtime.getValue
@@ -276,7 +301,7 @@ fun ControlledWave() {
     }
     KWave(
         config = WaveConfig.Default,
-        // Hold phase constant so the waves breathe in place; drive `time` to animate the breathing.
+        // Hold phase constant (or advance it slowly for drift); `time` drives breathing + sway.
         phase = 0f,
         time = elapsed.floatValue,
         modifier = Modifier.fillMaxSize(),
@@ -286,32 +311,43 @@ fun ControlledWave() {
 
 ### Deliberate horizontal translation: pager / scroll
 
-The waves never drift sideways on their own; the only ambient motion is the in-place breathing. When
-you *want* a deliberate horizontal translation (e.g. a hero that follows a pager), feed that signal
-through `phaseShift`. The drop-in `KWave` reads it on every recomposition, so a pager offset or
-scroll position flows straight into the wave's horizontal phase without restarting the loop:
+The ambient drift is very slow (a full phase cycle takes about two minutes). When you *want* a
+deliberate horizontal translation (e.g. a hero that follows a pager), feed that signal through
+`phaseShift`. The drop-in `KWave` reads it on every frame, so a pager offset or scroll position
+flows straight into the wave's horizontal phase without restarting the loop:
 
 ```kotlin
 val pagerState = rememberPagerState { pageCount }
 
 KWave(
     modifier = Modifier.fillMaxSize(),
-    // Each page deliberately nudges the waves sideways; the in-place breathing keeps running underneath.
+    // Each page deliberately nudges the waves sideways; the ambient motion keeps running underneath.
     phaseShift = (pagerState.currentPage + pagerState.currentPageOffsetFraction) * 0.5f,
 )
 ```
 
 Other knobs on the drop-in overload:
 
-- `speed` sets the breathing-tempo multiplier (how fast the layers bob in place). Default `1`.
+- `speed` sets the breathing/sway-tempo multiplier (how fast the layers move). Default `1`.
 - `phaseShift` is a live external phase signal for deliberate horizontal translation. Default `0`.
-- `isPlaying = false` freezes the animation on the current frame.
+- `isPlaying = false` freezes the animation on the current frame and fully suspends the internal
+  loop (zero frames, zero rendering work while frozen).
 - `respectReducedMotion` (default `true`): when the system reduce-motion setting is on, KWave
   renders a single static frame instead of starting the loop.
+- `drift` sets the ambient horizontal travel in radians of phase per second, parallaxed per layer.
+  Default `0.05` (a full phase cycle ≈ 2 minutes); `0f` removes the travel. Breathing layers still
+  sway gently — set `WaveConfig.sway = 0f` too for the strict in-place breathing of 0.1.x.
+- `maxFps` caps how often the animation updates; `<= 0` (default) updates on every display frame.
+  The motion is slow, so `24`–`30` is usually indistinguishable from the device rate and saves
+  battery, especially on 120 Hz displays.
+
+`speed` and `drift` are integrated per frame, so you can change them live (a slider, an animated
+transition) and the motion changes tempo smoothly instead of jumping.
 
 The drop-in overload is lifecycle-aware (it pauses below `STARTED` and resumes without a time jump)
 and randomizes its initial phase per instance, so several `KWave`s on one screen do not breathe in
-lockstep.
+lockstep. All frame-driven state is read in the draw phase, so the animation re-draws without ever
+recomposing, and the time integrators keep frame-level precision even after days on screen.
 
 ---
 

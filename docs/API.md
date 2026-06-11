@@ -20,18 +20,22 @@ never hardcoded black), and a highlight color. Per-layer alpha is auto by depth 
 | `gradient` | `fun gradient(top: Color, bottom: Color): WaveColors` | simple vertical auto-gradient top→bottom |
 | `palette` | `fun palette(colors: List<Color>): WaveColors` | rainbow on the **wave fills** (layers tinted by depth sample); **background** is a muted 2-stop wash darkened from the palette extremes. Empty ⇒ neutral fallback; single ⇒ like `solid` |
 | `solid` | `fun solid(color: Color): WaveColors` | single flat color; fill ramps by depth (darker back → lighter front) so same-color waves stay visible, plus auto alpha. `gradient(a, a)` routes here |
+| `withBackground` | `fun withBackground(color: Color): WaveColors` | copy with ONLY the background replaced by a flat color (wave palette/highlight untouched). `Color.Transparent` = **waves-only**: the renderer skips the background pass, KWave sits on your own content |
+| `withBackground` | `fun withBackground(top: Color, bottom: Color): WaveColors` | copy with ONLY the background replaced by a 2-stop vertical gradient |
+| `withBackground` | `fun withBackground(stops: List<Color>): WaveColors` | copy with ONLY the background replaced by a multi-stop gradient. Empty ⇒ transparent (waves-only); single ⇒ flat |
 
 ---
 
 ## `ShadowMode` (`sealed interface`)
 
-Controls per-layer depth shadow band + luminous highlight lip (highlight = inverted shadow logic).
+Controls the per-layer diffuse cast (elevation) shadow behind each wave's edge. The crest light is
+not a `ShadowMode` concern: it lives in the body-fill gradient, tinted by `WaveColors.highlight`.
 
 | Symbol | Signature | Notes |
 |--------|-----------|-------|
 | `Auto` | `data object Auto : ShadowMode` | **DEFAULT.** Black or white per layer by local wave-color luminance (light ⇒ dark shadow, dark ⇒ light shadow) |
 | `FromWave` | `data object FromWave : ShadowMode` | shadow = layer color lerped toward Black ~0.6; highlight = it lightened |
-| `None` | `data object None : ShadowMode` | no shadow band, no highlight lip |
+| `None` | `data object None : ShadowMode` | no cast shadow |
 | `Custom` | `class Custom(val color: Color, val alpha: Float) : ShadowMode` | explicit color + alpha (coerced `[0,1]`) for every layer |
 
 ---
@@ -66,6 +70,8 @@ class WaveConfig(
     val colors: WaveColors,
     val shadow: ShadowMode = ShadowMode.Auto,
     val gradientEnd: Float = 0.78f,                  // coerced [GRADIENT_END_MIN, 1] (floor ≈ 0.04)
+    val sway: Float = 1f,                            // config-wide crest-sway weight, coerced >= 0;
+                                                     //   0f = no sway (the exact pre-0.2.0 waveform)
 )
 ```
 
@@ -88,13 +94,15 @@ fun generate(
     shadow: ShadowMode = ShadowMode.Auto,
     gradientEnd: Float = 0.78f, // background gradient end fraction, coerced [GRADIENT_END_MIN, 1]
     seed: Int = 0,          // ADVANCED: deterministic jitter seed; leave 0 unless pinning a re-roll/screenshot
+    sway: Float = 1f,       // config-wide crest-sway weight, coerced >= 0; 0f = no sway (pre-0.2.0 waveform)
 ): WaveConfig
-// auto-distributed static phaseOffset, auto depth-alpha, per-layer breathing, tint sampled from
-// colors. Every per-layer property gets a deterministic seeded jitter scaled by `variation` so
-// layers desync; the jitter is a pure function of `seed`. `variation = 0` drops it. `crests` is a
-// relative density (1 = baseline), not a literal crest count; `harmonic` is its twin, the crest
-// roughness (0 ⇒ pure sine). The low-level WaveLayerSpec.phaseOffset still exists for power users;
-// generate() no longer exposes a high-level phaseSpread param.
+// auto-distributed phaseOffset (static stagger; gentle parallax under the drop-in's drift), auto
+// depth-alpha, per-layer breathing/sway, tint sampled from colors. Every per-layer property gets a
+// deterministic seeded jitter scaled by `variation` so layers desync; the jitter is a pure function
+// of `seed`. `variation = 0` drops it. `crests` is a relative density (1 = baseline), not a literal
+// crest count; `harmonic` is its twin, the crest roughness (0 ⇒ pure sine). The low-level
+// WaveLayerSpec.phaseOffset still exists for power users; generate() no longer exposes a high-level
+// phaseSpread param.
 ```
 
 ---
@@ -108,21 +116,30 @@ fun generate(
 fun KWave(
     config: WaveConfig = WaveConfig.Default,
     modifier: Modifier = Modifier,        // honored as-is; pass Modifier.fillMaxSize() for full-bleed
-    speed: Float = 1f,                    // breathing-tempo multiplier (how fast layers bob in place)
+    speed: Float = 1f,                    // breathing/sway-tempo multiplier
     phaseShift: Float = 0f,               // live external signal for deliberate horizontal translation
-                                          //   (pager/scroll), read every recomposition
-    isPlaying: Boolean = true,            // false freezes current frame
+                                          //   (pager/scroll), read every frame
+    isPlaying: Boolean = true,            // false freezes current frame and suspends the loop
     respectReducedMotion: Boolean = true, // + system reduce-motion on ⇒ one static frame
+    drift: Float = 0.05f,                 // ambient horizontal travel (rad of phase / s);
+                                          //   0f removes the travel (sway remains; see WaveConfig.sway)
+    maxFps: Float = 0f,                   // update-rate cap; <= 0 = every display frame
 )
 ```
 
-Internal accumulator: `phase = initialPhase + phaseShift`, `time = elapsed * speed`. The ambient
-`phase` is held constant, so there is no horizontal drift; the only ambient motion is the per-layer
-amplitude breathing driven by `time`, so the surface oscillates in place. `speed` is the
-breathing/bob tempo. `phaseShift` is a live external signal that translates the waves horizontally
-on purpose (e.g. a pager offset). `initialPhase` is a per-instance random constant (this overload
-only) so multiple instances don't breathe in lockstep. Lifecycle-aware (pause below STARTED, reset
-`lastNanos` on resume). Delegates to the stateless overload.
+Internal integrators (published by the loop, read in the draw phase): per frame delta `Δ` seconds,
+`time += Δ * speed`, `driftPhase += Δ * drift`, `phase = initialPhase + phaseShift + driftPhase`.
+The rates are **integrated**, not multiplied by total elapsed time, so changing `speed`/`drift`
+live alters the tempo without snapping the accumulated position. The ambient motion is the
+per-layer amplitude breathing plus the crest sway driven by `time` (weighted by `WaveConfig.sway`),
+plus the slow `drift` travel (parallaxed per layer by `WaveLayerSpec.speed`); `drift = 0f` removes
+the travel, and adding `WaveConfig.sway = 0f` restores the strict pre-0.2.0 in-place breathing.
+`speed` is the breathing/sway tempo (it does not scale `drift`; freeze with `isPlaying`).
+`phaseShift` is a live external signal that translates the waves horizontally on purpose (e.g. a
+pager offset). `initialPhase` is a per-instance random constant (this overload only) so multiple
+instances don't breathe in lockstep. Lifecycle-aware (pause below STARTED, reset `lastNanos` on
+resume); `isPlaying = false` truly suspends the loop (zero frames while frozen). Renders through the
+same internal renderer as the stateless overload.
 
 ### Stateless / controlled (pure, deterministic)
 
@@ -131,8 +148,8 @@ only) so multiple instances don't breathe in lockstep. Lifecycle-aware (pause be
 fun KWave(
     config: WaveConfig,
     phase: Float,                         // horizontal phase of every layer (constant for in-place
-                                          //   breathing, or driven for deliberate translation)
-    time: Float,                          // elapsed seconds (amplitude breathing)
+                                          //   motion, or driven for drift / deliberate translation)
+    time: Float,                          // elapsed seconds (amplitude breathing + crest sway)
     modifier: Modifier = Modifier,        // honored as-is
 )
 ```
@@ -149,5 +166,6 @@ external sync).
 - Zero-size guard: renderer returns when `size.minDimension <= 0`.
 - Per-layer fill is **palette-derived**, never a hardcoded `Color.Black`.
 - `harmonic = 0f` ⇒ pure sine for that layer.
-- Depth FX applies to `layers.dropLast(1)`; **safe at N=0 and N=1** (no crash, no IOOB).
+- Depth FX (the diffuse cast shadow) is applied **per layer, interleaved back→front**, so a
+  layer's shadow can never bleed over a nearer wave; **safe at N=0 and N=1** (no crash, no IOOB).
 - All public config values **coerced into valid ranges** at construction (see `DESIGN.md` §6).
